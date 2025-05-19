@@ -76,8 +76,8 @@ projects:
   project1:
     src: "/path/to/project1/src"
     scripts:
-        bild: "npm run build"
-        test: "npm run test"
+      bild: "npm run build"
+      test: "npm run test"
     excluded_files:
       - "**/.env"
       - "logs/**/*.log"
@@ -86,6 +86,11 @@ projects:
 - `projects`: 各プロジェクトのディレクトリ構造を設定。
 - `excluded_files`: 除外ファイル設定。グローバル設定とプロジェクト別設定の両方をサポート。
 - `rate_limit`: グローバルおよびプロジェクト別のリクエストリミット設定をサポート。
+
+### 除外ファイル設定
+
+- `excluded_files` セクションにワイルドカード (`**`) を使用可能。
+- プロジェクトごとに異なる設定が可能。
 
 ## MCPによるスクリプト操作
 
@@ -107,72 +112,83 @@ scriptsは設定ファイルにあるscriptsに記載したものだけ実行で
    • 削除 (DELETE)： 指定ファイルを削除する。
    • コピー (COPY)： 指定ファイルを別のパスにコピーする。
 
-## API設計一覧
+- 除外ファイルへのアクセス試行時にはエラーを返却し、詳細をログに記録。
 
-| エンドポイント | メソッド | 説明             | 制約事項                                   |
-| -------------- | -------- | ---------------- | ------------------------------------------ |
-| `/files`       | `GET`    | ファイル取得     | 除外ファイルは取得不可                     |
-| `/files`       | `PUT`    | ファイル更新     | 除外ファイルには書き込み不可               |
-| `/files`       | `DELETE` | ファイル削除     | 除外ファイルは削除不可                     |
-| `/files/copy`  | `POST`   | ファイルコピー   | コピー元およびコピー先が除外対象でないこと |
-| `/files/list`  | `GET`    | ファイル一覧取得 | 除外ファイルは一覧に含まれない             |
+### ファイルの取得
 
-### 1. `/api/data`
+リクエスト
 
-- メソッド：GET, PUT
-- リクエスト形式：
+```json
+{
+  "adapter": "file",
+  "action": "get",
+  "params": {
+    "path": "output.txt"
+  }
+}
+```
 
-  - `GET`:
+レスポンス
 
-    ```json
-    {
-      "project": "project1",
-      "path": "src/main.py"
-    }
-    ```
+```json
+{
+  "status": "success",
+  "data": "ファイルの内容"
+}
+```
 
-  - `PUT`:
+### ファイルの更新
 
-    ```json
-    {
-      "project": "project1",
-      "path": "src/main.py",
-      "content": "print('Hello, AI')"
-    }
-    ```
+リクエスト
 
-### 2. `/api/files`
+```json
+{
+  "adapter": "file",
+  "action": "write",
+  "params": {
+    "path": "output.txt",
+    "content": "Hello, MCP!"
+  }
+}
+```
 
-- メソッド：GET
+レスポンス
 
-- 説明：ファイル一覧を取得
+```json
+{
+  "status": "success",
+  "data": "File written"
+}
+```
 
-- リクエスト形式：
+### ファイルの一覧の取得
 
-  ```json
-  {
-    "project": "project1",
+リクエスト
+
+```json
+{
+  "adapter": "file",
+  "action": "list",
+  "params": {
     "path": "src/",
     "recursive": true,
     "max_depth": 3,
     "sort": "name",
     "filter": { "excluded": false }
   }
-  ```
+}
+```
 
 - `recursive`: サブディレクトリを含めるか。
-
 - `max_depth`: 再帰取得の深さ。
-
 - `sort`: "name" | "size" | "last_modified"
-
 - `filter`: `excluded`（除外ファイルの表示有無）
 
-**レスポンス例：**
+レスポンス
 
 ```json
 {
-  "status": 200,
+  "status": "success",
   "files": [
     {
       "name": "main.py",
@@ -192,47 +208,17 @@ scriptsは設定ファイルにあるscriptsに記載したものだけ実行で
 }
 ```
 
-**エラーコード:**
+## API設計
 
-- `400 Bad Request`: 無効なリクエスト形式
-- `401 Unauthorized`: 認証エラー（APIキーが無効）
-- `403 Forbidden`: 除外ファイルへのアクセス試行
-- `404 Not Found`: ファイルが存在しない
-- `422 Unprocessable Entity`: ファイル構造エラー
-- `429 Too Many Requests`: リクエスト制限超過
-- `500 Internal Server Error`: ファイルの読み取り/書き込みエラー
-
-## 除外ファイル設定
-
-- `excluded_files` セクションにワイルドカード (`**`) を使用可能。
-- プロジェクトごとに異なる設定が可能。
-
-**例：**
-
-```json
-"excluded_files": [
-  "**/.env",
-  "**/*.pem",
-  "logs/**/*.log"
-]
-```
-
-**プロジェクトごとの設定例：**
-
-```json
-"projects": {
-  "project1": {
-    "excluded_files": ["**/.env", "logs/**/*.log"]
-  }
-}
-```
-
-- 除外ファイルへのアクセス試行時には **403エラー** を返却し、詳細をログに記録。
+| エンドポイント | メソッド | 説明                |
+| -------------- | -------- | ------------------- |
+| `/mcp`         | `POST`   | MCPのエンドポイント |
 
 ## エラーログ出力
 
 - MCPの全てのリクエストとエラーは `/logs/mcp.log` に記録。
 - ログは JSON 形式で出力される。
+- 他のプログラムとの連携を考えJSON
 
 **ログ例：**
 
