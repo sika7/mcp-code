@@ -54,32 +54,35 @@ audience: ["開発者", "AIエージェント"]
     └── api_tests.rs            # APIの統合テスト
 ```
 
-設定ファイルを ~/.config/mcp-code/config.json で取り扱う
+設定ファイルを ~/.config/mcp-code/config.yaml で取り扱う
 
-## 設定ファイル構造 (`config.json`)
+## 設定ファイル構造 (`config.yaml`)
 
-```json
-{
-  "debug": true,
-  "log_path": "/path/to/global/logs",
-  "excluded_files": ["**/*.pem", "**/*.key"],
-  "rate_limit": {
-    "global": 60,
-    "projects": {
-      "project1": 30,
-      "project2": 100
-    }
-  },
-  "projects": {
-    "project1": {
-      "src": "/path/to/project1/src",
-      "config": "/path/to/project1/config",
-      "logs": "/path/to/project1/logs",
-      "excluded_files": ["**/.env", "logs/**/*.log"]
-    }
-  }
-}
+```yaml
+debug: true
+log_path: "/path/to/global/logs"
+excluded_files:
+  - "**/*.pem"
+  - "**/*.key"
+
+rate_limit:
+  global: 60
+  projects:
+    project1: 30
+    project2: 100
+
+projects:
+  project1:
+    src: "/path/to/project1/src"
+    scripts:
+        bild: "npm run build"
+        test: "npm run test"
+    excluded_files:
+      - "**/.env"
+      - "logs/**/*.log"
 ```
+
+scriptsは許可したものだけ実行できる。
 
 - `projects`: 各プロジェクトのディレクトリ構造を設定。
 - `excluded_files`: 除外ファイル設定。グローバル設定とプロジェクト別設定の両方をサポート。
