@@ -1,13 +1,16 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { loadConfig } from "./config";
-import { createRequestErrorLogger, createSystemLogger } from "./logs";
-import { runScript } from "./script";
+import { loadConfig } from "./config.js";
+import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
+import { runScript } from "./script.js";
 
 try {
   const config = loadConfig({});
   const requestLog = createRequestErrorLogger({ logFilePath: config.log_path });
+
+  const currentProjectName = config.current_project;
+  const currentProject = config.projects[currentProjectName];
 
   // MCP サーバーのインスタンスを作成
   const server = new McpServer({
@@ -25,40 +28,46 @@ try {
     }),
   );
 
-  server.tool(
-    "run_script",
-    {
-      project: z.string(),
-      name: z.string(),
-      request_id: z.string(),
-    },
-    async ({ project, name, request_id }) => {
-      const proj = config.projects?.[project];
+  Object.keys(currentProject.scripts).map((name) => {
+    server.tool(
+      `script:${name}`,
+      {
+        request_id: z.string(),
+      },
+      async ({ request_id }) => {
+        const scriptCmd = currentProject.scripts[name];
 
-      if (!proj) {
-        const msg = `プロジェクトが存在しません: ${project}`;
-        requestLog(404, msg, project, "-", request_id);
-        throw new Error(msg);
-      }
+        requestLog(
+          200,
+          `スクリプト実行開始: ${name}`,
+          currentProjectName,
+          "-",
+          request_id,
+        );
 
-      const scriptCmd = proj.scripts?.[name];
+        const result = await runScript(
+          name,
+          scriptCmd,
+          currentProject.src,
+        ).catch((error) => {
+          if (error instanceof Error) {
+            requestLog(500, error.message, currentProjectName, "-", request_id);
+          }
+          return error;
+        });
 
-      if (!scriptCmd) {
-        const msg = `スクリプト '${name}' はプロジェクト '${project}' に定義されていません`;
-        requestLog(403, msg, project, "-", request_id);
-        throw new Error(msg);
-      }
+        requestLog(
+          200,
+          `スクリプト実行開始: ${result}`,
+          currentProjectName,
+          "-",
+          request_id,
+        );
 
-      requestLog(200, `スクリプト実行開始: ${name}`, project, "-", request_id);
-
-      return runScript(name, scriptCmd, proj.src).catch((error) => {
-        if (error instanceof Error) {
-          requestLog(500, error.message, project, "-", request_id);
-        }
-        return error;
-      });
-    },
-  );
+        return result;
+      },
+    );
+  });
 
   // STDIO トランスポートでサーバーを開始
   const transport = new StdioServerTransport();

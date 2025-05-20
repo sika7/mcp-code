@@ -1,11 +1,10 @@
 import { readFileSync, existsSync } from "fs";
-import { homedir } from "os";
-import { join } from "path";
 import { parse } from "yaml";
-import { configSchema, Config } from "./schema";
-import { createSystemLogger } from "./logs";
+import { configSchema, Config } from "./schema.js";
+import { createSystemLogger } from "./logs.js";
+import { cwdPath } from "./util.js";
 
-const CONFIG_PATH = join(homedir(), ".config", "mcp-code", "config.yaml");
+const CONFIG_PATH = cwdPath(["config.yaml"]);
 
 export function loadConfig({ configPath = CONFIG_PATH }): Config {
   if (!existsSync(configPath)) {
@@ -24,6 +23,12 @@ export function loadConfig({ configPath = CONFIG_PATH }): Config {
       data: result.error.format(),
     });
     throw new Error("設定ファイルが無効です。");
+  }
+
+  if (!result.data.projects[result.data.current_project]) {
+    throw new Error(
+      `設定ファイルが無効です。プロジェクトが存在しません:${result.data.current_project}`,
+    );
   }
 
   return parsed as Config;

@@ -35,7 +35,6 @@ export async function runScript(
   });
 
   return {
-    structuredContent: {},
     content: [{ type: "text", text: `✅ 実行完了\n${result}` }],
   };
 }

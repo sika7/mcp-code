@@ -1,6 +1,6 @@
 import { appendFileSync, mkdirSync, existsSync } from "fs";
-import { homedir } from "os";
 import { dirname, join } from "path";
+import {cwdPath} from "./util.js";
 
 type logLevel = "INFO" | "DEBUG" | "WARNING" | "ERROR";
 
@@ -25,7 +25,21 @@ type LoggerOptions = {
   logFilePath?: string;
 };
 
-const defaultPath = join(homedir(), ".config", "mcp-code", "log", "mcp.log");
+const getLogDir = () => {
+
+  const logDir = cwdPath(["logs"]);
+  if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
+
+  return logDir;
+};
+
+const getLogFilePath = (logDir: string): string => {
+  const date = new Date().toISOString().slice(0, 10); // "2025-05-23"
+
+  return join(logDir, `mcp-${date}.log`);
+};
+
+const defaultPath = getLogFilePath(getLogDir());
 
 // ログ出力処理
 async function writeLog(
@@ -33,10 +47,6 @@ async function writeLog(
   entry: RequestLogEntry | SystemLogEntry,
 ) {
   appendFileSync(logPath, JSON.stringify(entry) + "\n", { encoding: "utf-8" });
-}
-
-export function absolutePath(logFilePath: string) {
-  join(process.cwd(), logFilePath);
 }
 
 export function createSystemLogger({
