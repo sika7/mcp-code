@@ -23,8 +23,8 @@ audience: ["開発者", "AIエージェント"]
 ├── Cargo.toml                  # プロジェクト設定ファイル
 ├── .env                        # 環境変数設定
 ├── /config/
-│   ├── global.json             # グローバル設定ファイル
-│   └── project1.json           # プロジェクト別設定ファイル
+│   ├── global.yaml             # グローバル設定ファイル
+│   └── project1.yaml           # プロジェクト別設定ファイル
 │
 ├── /logs/
 │   ├── api.log                 # APIリクエストログ
@@ -34,18 +34,10 @@ audience: ["開発者", "AIエージェント"]
 │   ├── main.rs                 # エントリーポイント
 │   ├── config.rs               # 設定ファイルのパース
 │   ├── logger.rs               # ログ出力
-│   ├── routes/
-│   │   ├── mod.rs              # ルーティングのエントリーポイント
-│   │   ├── data.rs             # /api/data (GET, PUT)
-│   │   └── files.rs            # /api/files (GET)
 │   │
 │   ├── controllers/
 │   │   ├── data_controller.rs  # ファイル取得・保存ロジック
 │   │   └── files_controller.rs # ファイル一覧取得ロジック
-│   │
-│   ├── middleware/
-│   │   ├── auth.rs             # 認証ミドルウェア
-│   │   └── rate_limit.rs       # レートリミットミドルウェア
 │   │
 │   └── utils/
 │       ├── error_handler.rs    # エラーハンドリング
@@ -66,14 +58,11 @@ excluded_files:
   - "**/*.pem"
   - "**/*.key"
 
-rate_limit:
-  global: 60
-  projects:
-    project1: 30
-    project2: 100
-
+rate_limit: 100
+current_project: "project1"
 projects:
   project1:
+    rate_limit: 30
     src: "/path/to/project1/src"
     scripts:
       bild: "npm run build"
@@ -207,12 +196,6 @@ scriptsは設定ファイルにあるscriptsに記載したものだけ実行で
   ]
 }
 ```
-
-## API設計
-
-| エンドポイント | メソッド | 説明                |
-| -------------- | -------- | ------------------- |
-| `/mcp`         | `POST`   | MCPのエンドポイント |
 
 ## エラーログ出力
 
