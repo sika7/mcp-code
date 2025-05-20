@@ -1,0 +1,24 @@
+{
+  "name": "mcp-code",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "weather": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"try{require('fs').chmodSync('build/index.js', 0o755)}catch(e){}\"",
+    "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "fs-extra": "^11.3.0",
+    "minimatch": "^10.0.1",
+    "yaml": "^2.8.0",
+    "zod": "^3.25.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "typescript": "^5.8.3"
+  }
+}
