@@ -1,6 +1,16 @@
-import { appendFileSync, mkdirSync, existsSync } from "fs";
+import {
+  appendFileSync,
+  mkdirSync,
+  existsSync,
+  readdirSync,
+  unlinkSync,
+} from "fs";
 import { dirname, join } from "path";
-import {cwdPath} from "./util.js";
+import { cwdPath } from "./util.js";
+import { homedir } from "os";
+import { parseISO, differenceInDays } from "date-fns";
+
+const MAX_AGE_DAYS = 30;
 
 type logLevel = "INFO" | "DEBUG" | "WARNING" | "ERROR";
 
@@ -26,7 +36,6 @@ type LoggerOptions = {
 };
 
 const getLogDir = () => {
-
   const logDir = cwdPath(["logs"]);
   if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 
@@ -100,3 +109,29 @@ export function createRequestErrorLogger({
     writeLog(logFilePath, entry);
   };
 }
+
+const deleteOldLogs = () => {
+  const logDir = cwdPath(["logs"]);
+  const files = readdirSync(logDir);
+  const log = createSystemLogger({});
+
+  for (const file of files) {
+    const match = file.match(/^mcp-(\d{4}-\d{2}-\d{2})\.log$/);
+    if (!match) continue;
+
+    const fileDate = parseISO(match[1]);
+    const age = differenceInDays(new Date(), fileDate);
+
+    if (age >= MAX_AGE_DAYS) {
+      const fullPath = join(logDir, file);
+      try {
+        unlinkSync(fullPath);
+        log({ logLevel: "INFO", message: `🧹 削除: ${file} (${age}日経過)` });
+      } catch (err) {
+        log({ logLevel: "ERROR", message: `⚠️ 削除失敗: ${file}`, data: err });
+      }
+    }
+  }
+};
+
+deleteOldLogs();
