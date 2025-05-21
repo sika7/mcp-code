@@ -272,7 +272,9 @@ try {
 
       try {
         const message = await writeTextFile(safeFilePath, content);
-        return await createMpcResponse(message);
+        // 相対パスにして返す。
+        const result = convertToRelativePaths(message, currentProject.src);
+        return await createMpcResponse(result);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
