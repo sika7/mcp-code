@@ -52,17 +52,14 @@ audience: ["開発者", "AIエージェント"]
 ## 設定ファイル構造 (`config.yaml`)
 
 ```yaml
-debug: true
 log_path: "/path/to/global/logs"
 excluded_files:
   - "**/*.pem"
   - "**/*.key"
 
-rate_limit: 100
 current_project: "project1"
 projects:
   project1:
-    rate_limit: 30
     src: "/path/to/project1/src"
     scripts:
       bild: "npm run build"
