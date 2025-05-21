@@ -1,4 +1,6 @@
 import { CallToolResult, TextContent } from "@modelcontextprotocol/sdk/types";
+import { createSystemLogger } from "./logs.js";
+import { detectFileTypeWithParser } from "./data-parse.js";
 
 // 共通のエラーコード定義
 export enum MCPErrorCode {
@@ -20,18 +22,35 @@ export enum MCPErrorCode {
   DATABASE_ERROR = "database_error",
 }
 
-export function createMpcResponse(
+export async function createMpcResponse(
   text: string | TextContent[],
   metadata?: Record<string, any>,
-): CallToolResult {
+  fileContent?: string | null,
+): Promise<CallToolResult> {
   // Convert string to proper content format if needed
   const content: TextContent[] =
     typeof text === "string" ? [{ type: "text", text }] : text;
+
+  let structuredContent = {};
+
+  if (fileContent) {
+    try {
+      const result = await detectFileTypeWithParser(fileContent);
+      structuredContent = {
+        type: result.mimeType,
+        json: result.parsedData,
+      };
+    } catch (e) {
+      const log = createSystemLogger({});
+      log({ logLevel: "ERROR", message: "パースに失敗しました。" });
+    }
+  }
 
   // Create the response object
   const response: CallToolResult = {
     content,
     ...(metadata ? { metadata } : {}),
+    structuredContent,
   };
 
   return response;

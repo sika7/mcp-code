@@ -56,6 +56,25 @@ try {
     });
   });
 
+  server.tool("file.reed", { filePath: z.string() }, async ({ filePath }) => {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+    if (isExcludedFiles(safeFilePath)) {
+      return createMpcErrorResponse(
+        "指定されたファイルはツールにより制限されています",
+        "PERMISSION_DENIED",
+      );
+    }
+
+    const content = await readTextFile(safeFilePath);
+    const lines = parseFileContent(content);
+
+    return createMpcResponse(content, {
+      lines: lines,
+    });
+  });
+
   Object.keys(currentProject.scripts).map((name) => {
     server.tool(
       `script:${name}`,
