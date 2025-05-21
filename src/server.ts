@@ -57,14 +57,14 @@ try {
   };
 
   server.tool(
-    "directory.tree",
+    "directoryTree",
     "プロジェクトのファイルをツリー表示する. exclude: glob風のパターン",
     {
       path: z.string(),
-      exclude: z.array(z.string()).optional(),
-      requestId: z.string(),
+      exclude: z.string(),
+      requestId: z.string().optional(),
     },
-    async ({ path, exclude = [], requestId }) => {
+    async ({ path, exclude, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
 
       // プロジェクトルートのパスに丸める
@@ -78,7 +78,7 @@ try {
       }
 
       try {
-        const mergeExcluded = [...allExcludedFiles, ...exclude];
+        const mergeExcluded = [...allExcludedFiles, ...exclude.split(",")];
         const log = createSystemLogger({});
         log({ logLevel: "INFO", message: "除外パターン", data: mergeExcluded });
         const tree = await generateDirectoryTree(safeFilePath, {
@@ -96,9 +96,13 @@ try {
   );
 
   server.tool(
-    "file.list",
+    "fileList",
     "指定ディレクトリのファイル一覧を取得する. filter: regex",
-    { path: z.string(), filter: z.string().optional(), requestId: z.string() },
+    {
+      path: z.string(),
+      filter: z.string().optional(),
+      requestId: z.string().optional(),
+    },
     async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
 
@@ -132,9 +136,9 @@ try {
   );
 
   server.tool(
-    "file.reed",
+    "fileReed",
     "指定ファイルの内容を返す.",
-    { filePath: z.string(), requestId: z.string() },
+    { filePath: z.string(), requestId: z.string().optional() },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
 
@@ -167,9 +171,13 @@ try {
   );
 
   server.tool(
-    "file.write",
+    "fileWrite",
     "指定ファイルに書き込む.",
-    { filePath: z.string(), content: z.string(), requestId: z.string() },
+    {
+      filePath: z.string(),
+      content: z.string(),
+      requestId: z.string().optional(),
+    },
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
 
@@ -195,11 +203,11 @@ try {
   );
 
   server.tool(
-    "file.delete",
+    "fileDelete",
     "指定ファイルを削除.",
     {
       filePath: z.string(),
-      requestId: z.string(),
+      requestId: z.string().optional(),
     },
     async ({ filePath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
@@ -227,13 +235,13 @@ try {
   );
 
   server.tool(
-    "file.insertLine",
+    "fileInsertLine",
     "指定ファイルの指定行に追記する. ",
     {
       filePath: z.string(),
       lineNumber: z.number(),
       content: z.string(),
-      requestId: z.string(),
+      requestId: z.string().optional(),
     },
     async ({ filePath, lineNumber, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -260,14 +268,14 @@ try {
   );
 
   server.tool(
-    "file.editLines",
+    "fileEditLines",
     "指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.",
     {
       filePath: z.string(),
       startLine: z.number(),
       endLine: z.number(),
       content: z.string(),
-      requestId: z.string(),
+      requestId: z.string().optional(),
     },
     async ({ filePath, startLine, endLine, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -299,13 +307,13 @@ try {
   );
 
   server.tool(
-    "file.deleteLines",
+    "fileDeleteLines",
     "指定ファイルの特定行を削除する.",
     {
       filePath: z.string(),
       startLine: z.number(),
       endLine: z.number(),
-      requestId: z.string(),
+      requestId: z.string().optional(),
     },
     async ({ filePath, startLine, endLine, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -334,10 +342,10 @@ try {
   Object.keys(currentProject.scripts).map((name) => {
     const scriptCmd = currentProject.scripts[name];
     server.tool(
-      `script:${name}`,
+      `script_${name}`,
       `ユーザー指定のスクリプト. ${scriptCmd}`,
       {
-        requestId: z.string(),
+        requestId: z.string().optional(),
       },
       async ({ requestId }) => {
         // リクエストIDがない場合はランダムなIDを生成
