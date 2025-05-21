@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { createSystemLogger } from "./logs.js";
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync } from "fs";
 import { minimatch } from "minimatch";
 
 const log = createSystemLogger({});
@@ -139,6 +139,50 @@ export async function listFiles(
 }
 
 /**
+ * ファイルまたはディレクトリを非同期で移動またはリネームする関数
+ * @param srcPath 移動元のパス
+ * @param destPath 移動先のパス
+ * @throws 移動先にすでにファイル・ディレクトリが存在する場合はエラー
+ */
+export async function fileMoveOrRename(
+  srcPath: string,
+  destPath: string,
+): Promise<string> {
+  try {
+    // 移動元が存在するかチェック
+    await fs.access(srcPath); // 存在しなければ例外が出る
+
+    // 移動先にすでにファイルまたはディレクトリが存在するか確認
+    try {
+      await fs.access(destPath);
+      throw new Error(
+        `移動先にすでにファイルまたはディレクトリが存在します: ${destPath}`,
+      );
+    } catch {
+      // 存在しなければ OK（例外が出るのが正常）
+    }
+
+    // 移動先ディレクトリの作成（なければ）
+    const destDir = path.dirname(destPath);
+    await fs.mkdir(destDir, { recursive: true });
+
+    // リネーム（= 移動）処理
+    await fs.rename(srcPath, destPath);
+
+    const msg = `移動完了: ${srcPath} → ${destPath}`;
+    log({ logLevel: "INFO", message: msg });
+    return msg;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log({
+      logLevel: "ERROR",
+      message: `ファイル/ディレクトリの移動に失敗しました: ${errorMsg}`,
+    });
+    throw error;
+  }
+}
+
+/**
  * 特定の行を編集する
  * @param filePath 編集するファイルのパス
  * @param startLineNumber 編集開始行番号 (1ベース)
@@ -168,7 +212,7 @@ export async function editLines(
 
     // ファイルの内容を読み込む
     const content = await readTextFile(filePath);
-    
+
     // 元のファイルの改行コードを検出
     const eol = content.includes("\r\n") ? "\r\n" : "\n";
     const lines = content.split(eol);
@@ -247,7 +291,7 @@ export async function insertLine(
 
     // ファイルの内容を読み込む
     const fileContent = await readTextFile(filePath);
-    
+
     // 元のファイルの改行コードを検出
     const eol = fileContent.includes("\r\n") ? "\r\n" : "\n";
     const lines = fileContent.split(eol);
@@ -307,7 +351,7 @@ export async function deleteLines(
 
     // ファイルの内容を読み込む
     const content = await readTextFile(filePath);
-    
+
     // 元のファイルの改行コードを検出
     const eol = content.includes("\r\n") ? "\r\n" : "\n";
     const lines = content.split(eol);

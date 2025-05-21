@@ -22,6 +22,7 @@ import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
 import {
   deleteFile,
+  fileMoveOrRename,
   generateDirectoryTree,
   insertLine,
   listFiles,
@@ -303,6 +304,40 @@ try {
 
       try {
         const message = await deleteFile(safeFilePath);
+        return await createMpcResponse(message);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "fileMoveOrRename",
+    "指定ファイルをコピー.",
+    {
+      srcPath: z.string(),
+      distPath: z.string(),
+      requestId: z.string().optional(),
+    },
+    async ({ srcPath, distPath, requestId }) => {
+      // リクエストIDがない場合はランダムなIDを生成
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeSrcPath = resolveSafeProjectPath(srcPath, currentProject.src);
+      const safeDistPath = resolveSafeProjectPath(distPath, currentProject.src);
+
+      if (isExcludedFiles(safeSrcPath) || isExcludedFiles(safeDistPath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const message = await fileMoveOrRename(safeSrcPath, safeDistPath);
         return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
