@@ -5,14 +5,14 @@ export async function runScript(
   scriptCmd: string,
   projectPath: string,
   shell = false,
-) {
+): Promise<string> {
   const [command, ...args] = scriptCmd.split(" ");
   const child = spawn(command, args, {
     cwd: projectPath,
     shell, // 安全性向上：シェルを通さず直接実行
   });
 
-  const result = await new Promise((resolve, reject) => {
+  const result = await new Promise<string>((resolve, reject) => {
     let output = "";
     let errorOutput = "";
 
@@ -34,7 +34,5 @@ export async function runScript(
     });
   });
 
-  return {
-    content: [{ type: "text", text: `✅ 実行完了\n${result}` }],
-  };
+  return result;
 }

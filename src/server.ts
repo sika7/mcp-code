@@ -4,6 +4,9 @@ import { z } from "zod";
 import { loadConfig } from "./config.js";
 import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
+import { parseFileContent, readTextFile } from "./files.js";
+import { isExcluded, resolveSafeProjectPath } from "./util.js";
+import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 
 try {
   const config = loadConfig({});
@@ -18,15 +21,40 @@ try {
     version: "1.0.0",
   });
 
-  // 加算ツールを追加
-  server.tool(
-    "add",
-    "",
-    { a: z.number(), b: z.number() },
-    async ({ a, b }) => ({
-      content: [{ type: "text", text: String(a + b) }],
-    }),
-  );
+  const globalExcludedFiles = config.excluded_files;
+
+  const isExcludedFiles = (filePath: string) => {
+    if (globalExcludedFiles) {
+      // globalなexcluded_filesが設定されてればチェック
+      if (isExcluded(filePath, globalExcludedFiles)) return true;
+    }
+
+    if (currentProject.excluded_files) {
+      // excluded_filesが設定されてればチェック
+      if (isExcluded(filePath, currentProject.excluded_files)) return true;
+    }
+
+    return false;
+  };
+
+  server.tool("file.reed", { filePath: z.string() }, async ({ filePath }) => {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+    if (isExcludedFiles(safeFilePath)) {
+      return createMpcErrorResponse(
+        "指定されたファイルはツールにより制限されています",
+        "PERMISSION_DENIED",
+      );
+    }
+
+    const content = await readTextFile(safeFilePath);
+    const lines = parseFileContent(content);
+
+    return createMpcResponse(content, {
+      lines: lines,
+    });
+  });
 
   Object.keys(currentProject.scripts).map((name) => {
     server.tool(
@@ -45,7 +73,7 @@ try {
           request_id,
         );
 
-        const result = await runScript(
+        const result = (await runScript(
           name,
           scriptCmd,
           currentProject.src,
@@ -54,7 +82,7 @@ try {
             requestLog(500, error.message, currentProjectName, "-", request_id);
           }
           return error;
-        });
+        })) as string;
 
         requestLog(
           200,
@@ -64,7 +92,7 @@ try {
           request_id,
         );
 
-        return result;
+        return createMpcResponse(result);
       },
     );
   });

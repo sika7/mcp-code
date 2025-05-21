@@ -6,9 +6,8 @@ import {
   unlinkSync,
 } from "fs";
 import { dirname, join } from "path";
-import { cwdPath } from "./util.js";
-import { homedir } from "os";
 import { parseISO, differenceInDays } from "date-fns";
+import { cwdPath } from "./util.js";
 
 const MAX_AGE_DAYS = 30;
 
