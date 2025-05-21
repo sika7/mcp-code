@@ -14,6 +14,19 @@ export const isExcluded = (filepath: string, patterns: string[]): boolean => {
 };
 
 /**
+ * ランダムなリクエストIDを生成する関数
+ * @returns UUID形式のリクエストID
+ */
+export function generateRequestId(): string {
+  // シンプルなUUID v4生成実装例
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+/**
  * パスをプロジェクトルート内に正規化する
  *
  * @param inputPath - 入力パス

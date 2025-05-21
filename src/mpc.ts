@@ -25,11 +25,17 @@ export enum MCPErrorCode {
 export async function createMpcResponse(
   text: string | TextContent[],
   metadata?: Record<string, any>,
+  requestId?: string,
   fileContent?: string | null,
 ): Promise<CallToolResult> {
   // Convert string to proper content format if needed
   const content: TextContent[] =
     typeof text === "string" ? [{ type: "text", text }] : text;
+
+  const finalMetadata = {
+    request_id: requestId,
+    ...(metadata || {}),
+  };
 
   let structuredContent = {};
 
@@ -49,7 +55,7 @@ export async function createMpcResponse(
   // Create the response object
   const response: CallToolResult = {
     content,
-    ...(metadata ? { metadata } : {}),
+    metadata: finalMetadata,
     structuredContent,
   };
 
@@ -59,18 +65,24 @@ export async function createMpcResponse(
 export function createMpcErrorResponse(
   text: string | TextContent[],
   errorCode?: string,
+  requestId?: string,
   metadata?: Record<string, any>,
 ): CallToolResult {
   // Convert string to proper content format if needed
   const content: TextContent[] =
     typeof text === "string" ? [{ type: "text", text }] : text;
 
+  const finalMetadata = {
+    request_id: requestId,
+    ...(metadata || {}),
+  };
+
   // Create the response object
   const response: CallToolResult = {
     content,
+    metadata: finalMetadata,
     isError: true,
     ...(errorCode && { errorCode }),
-    ...(metadata ? { metadata } : {}),
   };
 
   return response;

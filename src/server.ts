@@ -4,8 +4,17 @@ import { z } from "zod";
 import { loadConfig } from "./config.js";
 import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
-import { deleteFile, parseFileContent, readTextFile } from "./files.js";
-import { isExcluded, resolveSafeProjectPath } from "./util.js";
+import {
+  deleteFile,
+  parseFileContent,
+  readTextFile,
+  writeTextFile,
+} from "./files.js";
+import {
+  generateRequestId,
+  isExcluded,
+  resolveSafeProjectPath,
+} from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 
 try {
@@ -37,47 +46,108 @@ try {
     return false;
   };
 
-  server.tool("file.reed", { filePath: z.string() }, async ({ filePath }) => {
-    // プロジェクトルートのパスに丸める
-    const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+  server.tool(
+    "file.reed",
+    { filePath: z.string(), requestId: z.string() },
+    async ({ filePath, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
 
-    if (isExcludedFiles(safeFilePath)) {
-      return createMpcErrorResponse(
-        "指定されたファイルはツールにより制限されています",
-        "PERMISSION_DENIED",
-      );
-    }
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
 
-    const content = await readTextFile(safeFilePath);
-    const lines = parseFileContent(content);
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
 
-    return createMpcResponse(content, {
-      lines: lines,
-    });
-  });
+      try {
+        const content = await readTextFile(safeFilePath);
+        const lines = parseFileContent(content);
 
-  server.tool("file.delete", { filePath: z.string() }, async ({ filePath }) => {
-    // プロジェクトルートのパスに丸める
-    const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+        return createMpcResponse(
+          content,
+          {
+            lines: lines,
+          },
+          finalRequestId,
+        );
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
 
-    if (isExcludedFiles(safeFilePath)) {
-      return createMpcErrorResponse(
-        "指定されたファイルはツールにより制限されています",
-        "PERMISSION_DENIED",
-      );
-    }
+  server.tool(
+    "file.write",
+    { filePath: z.string(), content: z.string(), requestId: z.string() },
+    async ({ filePath, content, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
 
-    const message = await deleteFile(safeFilePath);
-    return createMpcResponse(message);
-  });
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const message = await writeTextFile(safeFilePath, content);
+        return createMpcResponse(message);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg);
+      }
+    },
+  );
+
+  server.tool(
+    "file.delete",
+    {
+      filePath: z.string(),
+      requestId: z.string(),
+    },
+    async ({ filePath, requestId }) => {
+      // リクエストIDがない場合はランダムなIDを生成
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const message = await deleteFile(safeFilePath);
+        return createMpcResponse(message);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
 
   Object.keys(currentProject.scripts).map((name) => {
     server.tool(
       `script:${name}`,
       {
-        request_id: z.string(),
+        requestId: z.string(),
       },
-      async ({ request_id }) => {
+      async ({ requestId }) => {
+        // リクエストIDがない場合はランダムなIDを生成
+        const finalRequestId = requestId || generateRequestId();
+
         const scriptCmd = currentProject.scripts[name];
 
         requestLog(
@@ -85,29 +155,19 @@ try {
           `スクリプト実行開始: ${name}`,
           currentProjectName,
           "-",
-          request_id,
+          finalRequestId,
         );
 
-        const result = (await runScript(
-          name,
-          scriptCmd,
-          currentProject.src,
-        ).catch((error) => {
-          if (error instanceof Error) {
-            requestLog(500, error.message, currentProjectName, "-", request_id);
-          }
-          return error;
-        })) as string;
+        try {
+          const result = await runScript(name, scriptCmd, currentProject.src);
 
-        requestLog(
-          200,
-          `スクリプト実行開始: ${result}`,
-          currentProjectName,
-          "-",
-          request_id,
-        );
-
-        return createMpcResponse(result);
+          return createMpcResponse(result);
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+          return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        }
       },
     );
   });
