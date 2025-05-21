@@ -70,14 +70,24 @@ projects:
 ### インストール
 
 ```bash
-# npmからインストール
-npm install mcp-code
-
 # または、ソースからインストール
 git clone https://github.com/your-username/mcp-code.git
 cd mcp-code
 npm install
 npm run build
+```
+
+claude desktopなど
+```json
+{
+    "mcpServers": {
+        "mcp_code": {
+            "command": "node",
+            "args": ["/your/path/to/directory/mcp-code/dist/server.js"],
+            "env": {}
+        }
+    }
+}
 ```
 
 ### コマンドライン
@@ -116,7 +126,7 @@ MCP-Codeは、Model Context Protocol (MCP) SDKを使用してLLM（大規模言�
 - fileInsertLine: 指定ファイルの指定行に追記
 - fileEditLines: 指定ファイルの指定行を編集
 - fileDeleteLines: 指定ファイルの特定行を削除
-- script_[name]: 設定ファイルで定義されたスクリプトを実行
+- script\_[name]: 設定ファイルで定義されたスクリプトを実行
 
 ## 技術スタック
 
@@ -161,3 +171,4 @@ MCP-CodeはApache License 2.0の下で提供されています。詳細につい
 
 - [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk): MIT ライセンス
 - その他の依存ライブラリもMITまたはISC（MIT互換）ライセンスですが、Apache License 2.0はこれらと互換性があります。
+
