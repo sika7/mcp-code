@@ -11,7 +11,12 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts",
-    "test": "echo 'No tests specified' && exit 0"
+    "test": "npx tsx tests/index.ts",
+    "test:config": "npx tsx tests/config.test.ts",
+    "test:files": "npx tsx tests/files.test.ts",
+    "test:safe-edit": "npx tsx tests/safe-edit.test.ts",
+    "test:util": "npx tsx tests/util.test.ts",
+    "test:script": "npx tsx tests/script.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
@@ -26,9 +31,12 @@
     "zod": "^3.25.7"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.19",
     "@types/papaparse": "^5.3.16",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }
