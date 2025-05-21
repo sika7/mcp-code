@@ -6,6 +6,7 @@ import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
 import {
   deleteFile,
+  deleteLines,
   listFiles,
   parseFileContent,
   readTextFile,
@@ -121,7 +122,7 @@ try {
 
   server.tool(
     "file.write",
-    "指定ファイルにファイルに書き込む.",
+    "指定ファイルに書き込む.",
     { filePath: z.string(), content: z.string(), requestId: z.string() },
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -170,6 +171,39 @@ try {
 
       try {
         const message = await deleteFile(safeFilePath);
+        return await createMpcResponse(message);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "file.deleteLines",
+    "指定ファイルの特定行を削除する.",
+    {
+      filePath: z.string(),
+      startLine: z.number(),
+      endLine: z.number(),
+      requestId: z.string(),
+    },
+    async ({ filePath, startLine, endLine, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const message = await deleteLines(safeFilePath, startLine, endLine);
         return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);

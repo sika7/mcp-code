@@ -101,7 +101,10 @@ export async function deleteFile(filePath: string): Promise<string> {
  * @param filter ファイル名フィルター (オプション)
  * @returns ファイル一覧
  */
-export async function listFiles(dirPath: string, filter?: string): Promise<string[]> {
+export async function listFiles(
+  dirPath: string,
+  filter?: string,
+): Promise<string[]> {
   try {
     // ディレクトリが存在するか確認
     if (!existsSync(dirPath)) {
@@ -226,40 +229,57 @@ export async function insertLine(
 /**
  * 特定の行を削除する
  * @param filePath 編集するファイルのパス
- * @param lineNumber 削除する行番号 (1ベース)
+ * @param startLine 削除する行番号 (1ベース)
+ * @param endLine 削除する行番号 (1ベース)
  * @returns 成功メッセージ
  */
-export async function deleteLine(filePath: string, lineNumber: number) {
+export async function deleteLines(
+  filePath: string,
+  startLine: number,
+  endLine: number,
+) {
   try {
     // ファイルの内容を読み込む
     const content = await readTextFile(filePath);
     const lines = content.split("\n");
 
     // 行番号のバリデーション
-    if (lineNumber < 1 || lineNumber > lines.length) {
+    if (startLine < 1 || startLine > lines.length) {
       throw new Error(
-        `Line number out of range: ${lineNumber} (file has ${lines.length} lines)`,
+        `Start line number out of range: ${startLine} (file has ${lines.length} lines)`,
       );
     }
 
-    // 指定行を削除
-    lines.splice(lineNumber - 1, 1);
+    if (endLine < startLine || endLine > lines.length) {
+      throw new Error(
+        `End line number out of range: ${endLine} must be between ${startLine} and ${lines.length}`,
+      );
+    }
+
+    // 指定範囲の行を削除（第2引数は削除する要素数）
+    const linesToDelete = endLine - startLine + 1;
+    lines.splice(startLine - 1, linesToDelete);
 
     // ファイルに書き戻す
     await writeTextFile(filePath, lines.join("\n"));
 
+    const message =
+      startLine === endLine
+        ? `Successfully deleted line ${startLine} from ${filePath}`
+        : `Successfully deleted lines ${startLine}-${endLine} from ${filePath}`;
+
     log({
       logLevel: "INFO",
-      message: `Successfully deleted line ${lineNumber} from ${filePath}`,
+      message: message,
     });
-    return `Successfully deleted line ${lineNumber} from ${filePath}`;
+    return message;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     log({
       logLevel: "ERROR",
-      message: `Error deleting line: ${errorMsg}`,
+      message: `Error deleting lines: ${errorMsg}`,
     });
-    throw new Error(`Failed to delete line in ${filePath}: ${errorMsg}`);
+    throw new Error(`Failed to delete lines in ${filePath}: ${errorMsg}`);
   }
 }
 
@@ -278,4 +298,3 @@ export function parseFileContent(content: string) {
     lastLine: lines[lines.length - 1],
   };
 }
-
