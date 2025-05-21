@@ -172,3 +172,32 @@ MCP-CodeはApache License 2.0の下で提供されています。詳細につい
 - [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk): MIT ライセンス
 - その他の依存ライブラリもMITまたはISC（MIT互換）ライセンスですが、Apache License 2.0はこれらと互換性があります。
 
+## 今後追加する機能(予定)
+
+### ファイル操作系
+- **ファイル移動/リネーム** - `fileMoveOrRename` みたいな機能があると便利
+- **ファイルコピー** - `fileCopy` でファイルやディレクトリの複製
+- **ファイル検索** - `fileSearch` で内容やファイル名での検索（grepのような）
+- **シンボリックリンク作成** - `createSymlink` でリンク作成
+
+### コード解析系
+- **構文チェック** - TypeScript/JavaScript/Python等の構文エラーチェック
+- **依存関係解析** - import/requireの関係を可視化
+- **TODO/FIXME抽出** - コメント内のTODOを一覧化
+- **コード統計** - 行数、関数数、複雑度などの計測
+
+### Git統合
+- **Git操作** - `gitStatus`, `gitDiff`, `gitCommit`, `gitBranch` など
+- **変更差分表示** - ファイルの変更点をより詳細に表示
+
+### 開発支援
+- **パッケージ管理** - `npm install`的な依存関係インストール
+- **ログ監視** - リアルタイムでログファイル監視
+- **プロセス管理** - 実行中のプロセス管理や停止
+
+### ユーティリティ
+- **ファイル比較** - 2つのファイルの差分表示
+- **アーカイブ操作** - zip/tar等の作成・展開
+- **ファイル権限変更** - chmod相当の機能
+- **ディスク使用量** - フォルダサイズの計算
+
