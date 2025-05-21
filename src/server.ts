@@ -4,7 +4,7 @@ import { z } from "zod";
 import { loadConfig } from "./config.js";
 import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
-import { parseFileContent, readTextFile } from "./files.js";
+import { deleteFile, parseFileContent, readTextFile } from "./files.js";
 import { isExcluded, resolveSafeProjectPath } from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 
@@ -56,7 +56,7 @@ try {
     });
   });
 
-  server.tool("file.reed", { filePath: z.string() }, async ({ filePath }) => {
+  server.tool("file.delete", { filePath: z.string() }, async ({ filePath }) => {
     // プロジェクトルートのパスに丸める
     const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
 
@@ -67,12 +67,8 @@ try {
       );
     }
 
-    const content = await readTextFile(safeFilePath);
-    const lines = parseFileContent(content);
-
-    return createMpcResponse(content, {
-      lines: lines,
-    });
+    const message = await deleteFile(safeFilePath);
+    return createMpcResponse(message);
   });
 
   Object.keys(currentProject.scripts).map((name) => {
