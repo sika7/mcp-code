@@ -122,7 +122,7 @@ export async function listFiles(
     }
 
     log({
-      logLevel: "ERROR",
+      logLevel: "INFO",
       message: `Found ${filteredFiles.length} files in ${dirPath}`,
     });
 
@@ -141,7 +141,8 @@ export async function listFiles(
 /**
  * 特定の行を編集する
  * @param filePath 編集するファイルのパス
- * @param lineNumber 編集する行番号 (1ベース)
+ * @param startLineNumber 編集開始行番号 (1ベース)
+ * @param endLineNumber 編集終了行番号 (1ベース)
  * @param newContent 新しい行の内容
  * @returns 成功メッセージ
  */
@@ -152,9 +153,25 @@ export async function editLines(
   newContent: string | string[],
 ): Promise<string> {
   try {
+    // ファイルが存在するか確認
+    try {
+      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK);
+    } catch (error: any) {
+      if (error.code === "ENOENT") {
+        throw new Error(`File does not exist: ${filePath}`);
+      } else if (error.code === "EACCES") {
+        throw new Error(`Permission denied: ${filePath}`);
+      } else {
+        throw error;
+      }
+    }
+
     // ファイルの内容を読み込む
     const content = await readTextFile(filePath);
-    const lines = content.split("\n");
+    
+    // 元のファイルの改行コードを検出
+    const eol = content.includes("\r\n") ? "\r\n" : "\n";
+    const lines = content.split(eol);
 
     // 行番号のバリデーション
     if (startLineNumber < 1 || startLineNumber > lines.length) {
@@ -177,14 +194,15 @@ export async function editLines(
     if (Array.isArray(newContent)) {
       newLines = newContent;
     } else {
-      newLines = newContent.split("\n");
+      // 元のファイルと同じ改行コードで分割
+      newLines = newContent.split(eol);
     }
 
     // 指定範囲の行を更新
     lines.splice(startLineNumber - 1, numLinesToReplace, ...newLines);
 
-    // ファイルに書き戻す
-    await writeTextFile(filePath, lines.join("\n"));
+    // ファイルに書き戻す (元の改行コードを維持)
+    await writeTextFile(filePath, lines.join(eol));
 
     log({
       logLevel: "INFO",
@@ -214,9 +232,25 @@ export async function insertLine(
   content: string,
 ): Promise<string> {
   try {
+    // ファイルが存在するか確認
+    try {
+      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK);
+    } catch (error: any) {
+      if (error.code === "ENOENT") {
+        throw new Error(`File does not exist: ${filePath}`);
+      } else if (error.code === "EACCES") {
+        throw new Error(`Permission denied: ${filePath}`);
+      } else {
+        throw error;
+      }
+    }
+
     // ファイルの内容を読み込む
     const fileContent = await readTextFile(filePath);
-    const lines = fileContent.split("\n");
+    
+    // 元のファイルの改行コードを検出
+    const eol = fileContent.includes("\r\n") ? "\r\n" : "\n";
+    const lines = fileContent.split(eol);
 
     // 行番号のバリデーション (ファイルの末尾への追加も許可)
     if (lineNumber < 1 || lineNumber > lines.length + 1) {
@@ -228,8 +262,8 @@ export async function insertLine(
     // 指定位置に行を挿入
     lines.splice(lineNumber - 1, 0, content);
 
-    // ファイルに書き戻す
-    await writeTextFile(filePath, lines.join("\n"));
+    // ファイルに書き戻す (元の改行コードを維持)
+    await writeTextFile(filePath, lines.join(eol));
     log({
       logLevel: "INFO",
       message: `Successfully inserted line at position ${lineNumber} in ${filePath}`,
@@ -248,8 +282,8 @@ export async function insertLine(
 /**
  * 特定の行を削除する
  * @param filePath 編集するファイルのパス
- * @param startLine 削除する行番号 (1ベース)
- * @param endLine 削除する行番号 (1ベース)
+ * @param startLine 削除開始行番号 (1ベース)
+ * @param endLine 削除終了行番号 (1ベース)
  * @returns 成功メッセージ
  */
 export async function deleteLines(
@@ -258,9 +292,25 @@ export async function deleteLines(
   endLine: number,
 ) {
   try {
+    // ファイルが存在するか確認
+    try {
+      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK);
+    } catch (error: any) {
+      if (error.code === "ENOENT") {
+        throw new Error(`File does not exist: ${filePath}`);
+      } else if (error.code === "EACCES") {
+        throw new Error(`Permission denied: ${filePath}`);
+      } else {
+        throw error;
+      }
+    }
+
     // ファイルの内容を読み込む
     const content = await readTextFile(filePath);
-    const lines = content.split("\n");
+    
+    // 元のファイルの改行コードを検出
+    const eol = content.includes("\r\n") ? "\r\n" : "\n";
+    const lines = content.split(eol);
 
     // 行番号のバリデーション
     if (startLine < 1 || startLine > lines.length) {
@@ -279,8 +329,8 @@ export async function deleteLines(
     const linesToDelete = endLine - startLine + 1;
     lines.splice(startLine - 1, linesToDelete);
 
-    // ファイルに書き戻す
-    await writeTextFile(filePath, lines.join("\n"));
+    // ファイルに書き戻す (元の改行コードを維持)
+    await writeTextFile(filePath, lines.join(eol));
 
     const message =
       startLine === endLine
@@ -331,12 +381,6 @@ interface TreeOptions {
  * @param indent インデント文字列（内部使用）
  * @returns ツリー表示用の文字列
  */
-
-interface TreeOptions {
-  maxDepth?: number;
-  currentDepth?: number;
-  exclude?: string[];
-}
 
 export async function generateDirectoryTree(
   dirPath: string,
