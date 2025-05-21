@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { createSystemLogger } from "./logs.js";
 import { existsSync, readdirSync, statSync } from "fs";
+import { minimatch } from "minimatch";
 
 const log = createSystemLogger({});
 
@@ -330,14 +331,25 @@ interface TreeOptions {
  * @param indent インデント文字列（内部使用）
  * @returns ツリー表示用の文字列
  */
+
+interface TreeOptions {
+  maxDepth?: number;
+  currentDepth?: number;
+  exclude?: string[];
+}
+
 export async function generateDirectoryTree(
   dirPath: string,
   options: TreeOptions = {},
   indent: string = "",
+  rootPath?: string, // 内部処理用
 ): Promise<string> {
   const currentDepth = options.currentDepth || 1;
   const maxDepth = options.maxDepth || Number.POSITIVE_INFINITY;
   const exclude = options.exclude || [];
+
+  // 最初の呼び出し時にrootPathを設定
+  const root = rootPath || dirPath;
 
   if (currentDepth > maxDepth) {
     return `${indent}... (最大深さ制限に達しました)\n`;
@@ -350,22 +362,46 @@ export async function generateDirectoryTree(
 
     // 除外パターンに一致しないアイテムのみをフィルタリング
     const filteredItems = items.filter((item) => {
+      const itemFullPath = path.join(dirPath, item);
+
+      // 常に正規化された相対パスを使用
+      // path.relativeがエラーを投げる可能性がある場合は代替手段を使用
+      let relativePath;
+      try {
+        relativePath = path.relative(root, itemFullPath);
+        // Windows環境では一貫性のためにパス区切り文字を統一
+        relativePath = relativePath.split(path.sep).join("/");
+      } catch (e) {
+        // 異なるドライブの場合など、相対パスが計算できない場合
+        // 代替として、アイテム名だけを使用
+        relativePath = item;
+      }
+
+      // 各除外パターンについてチェック
       return !exclude.some((pattern) => {
-        if (pattern.startsWith("*") && pattern.endsWith("*")) {
-          const middle = pattern.slice(1, -1);
-          return item.includes(middle);
-        } else if (pattern.startsWith("*")) {
-          const suffix = pattern.slice(1);
-          return item.endsWith(suffix);
-        } else if (pattern.endsWith("*")) {
-          const prefix = pattern.slice(0, -1);
-          return item.startsWith(prefix);
+        // パス区切り文字を正規化
+        const normalizedPattern = pattern.split(path.sep).join("/");
+
+        // ディレクトリパターン（末尾が/）の特別処理
+        if (normalizedPattern.endsWith("/")) {
+          // 完全一致、またはディレクトリ内のパスかどうか
+          return (
+            relativePath === normalizedPattern.slice(0, -1) ||
+            relativePath.startsWith(normalizedPattern) ||
+            minimatch(relativePath, normalizedPattern + "**", {
+              nocase: process.platform === "win32",
+            })
+          );
         }
-        return item === pattern;
+
+        // 通常のminimatchパターン
+        return minimatch(relativePath, normalizedPattern, {
+          nocase: process.platform === "win32",
+        });
       });
     });
 
-    // すべてのアイテムの処理を順番に実行
+    // アイテムの処理（以前と同じ）
     for (let i = 0; i < filteredItems.length; i++) {
       const item = filteredItems[i];
       const itemPath = path.join(dirPath, item);
@@ -387,6 +423,7 @@ export async function generateDirectoryTree(
             itemPath,
             childOptions,
             childIndent,
+            root, // ルートパスを引き継ぐ
           );
         }
       } catch (err) {

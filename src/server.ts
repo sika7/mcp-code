@@ -79,6 +79,8 @@ try {
 
       try {
         const mergeExcluded = [...allExcludedFiles, ...exclude];
+        const log = createSystemLogger({});
+        log({ logLevel: "INFO", message: "除外パターン", data: mergeExcluded });
         const tree = await generateDirectoryTree(safeFilePath, {
           exclude: mergeExcluded,
         });
