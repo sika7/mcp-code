@@ -153,13 +153,11 @@ export async function fileMoveOrRename(
     await fs.access(srcPath); // 存在しなければ例外が出る
 
     // 移動先にすでにファイルまたはディレクトリが存在するか確認
-    try {
-      await fs.access(destPath);
+    // existsSyncを使ってシンプルにチェック
+    if (existsSync(destPath)) {
       throw new Error(
         `移動先にすでにファイルまたはディレクトリが存在します: ${destPath}`,
       );
-    } catch {
-      // 存在しなければ OK（例外が出るのが正常）
     }
 
     // 移動先ディレクトリの作成（なければ）
