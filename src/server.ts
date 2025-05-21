@@ -22,6 +22,8 @@ import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
 import {
   deleteFile,
+  deleteLines,
+  editLines,
   fileMoveOrRename,
   generateDirectoryTree,
   insertLine,
@@ -30,7 +32,6 @@ import {
   readTextFile,
   writeTextFile,
 } from "./files.js";
-import { safeEditLines, safeDeleteLines } from "./safe-edit.js";
 import {
   convertToRelativePaths,
   generateRequestId,
@@ -406,8 +407,7 @@ try {
       }
 
       try {
-        // バグがある元のeditLines関数の代わりに、安全なsafeEditLines関数を使用
-        const message = await safeEditLines(
+        const message = await editLines(
           safeFilePath,
           startLine,
           endLine,
@@ -445,8 +445,7 @@ try {
       }
 
       try {
-        // バグがある元のdeleteLines関数の代わりに、安全なsafeDeleteLines関数を使用
-        const message = await safeDeleteLines(safeFilePath, startLine, endLine);
+        const message = await deleteLines(safeFilePath, startLine, endLine);
         return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
