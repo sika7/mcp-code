@@ -1,0 +1,9 @@
+MCP-Code
+Copyright 2025 MCP-Code Contributors
+
+This product includes software developed by the MCP-Code project contributors.
+
+This product depends on @modelcontextprotocol/sdk, which is available under an MIT license.
+For details, see: https://github.com/modelcontextprotocol/typescript-sdk
+
+This product also depends on other open-source components with MIT and ISC licenses.
