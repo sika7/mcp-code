@@ -225,3 +225,12 @@ TOML (application/toml)
 INI (text/plain)
 CSV (text/csv)
 TSV (text/tab-separated-values)
+
+
+## ディレクトリのツリー表示の除外パターン
+
+完全一致: node_modules
+先頭一致: test* (test で始まるすべてのファイル/ディレクトリ)
+末尾一致: *.js (.js で終わるすべてのファイル)
+部分一致: *test* (test を含むすべてのファイル/ディレクトリ)
+
