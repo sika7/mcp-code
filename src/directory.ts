@@ -59,3 +59,4 @@ export function removeDirectorySync(dirPath: string): void {
     console.error(`ディレクトリの削除に失敗しました: ${err.message}`);
     throw err;
   }
+}
