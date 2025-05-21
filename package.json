@@ -9,7 +9,6 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "echo 'aaa'",
     "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts"
   },
   "dependencies": {

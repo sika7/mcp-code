@@ -1,11 +1,24 @@
 import { existsSync, mkdirSync, statSync } from "fs";
 import { Minimatch } from "minimatch";
 import path, { join } from "path";
+import * as os from "os";
 
-export function cwdPath(filePath: string[]) {
-  return join(process.cwd(), ...filePath);
+// export function cwdPath(filePath: string[]) {
+//   return join(process.cwd(), ...filePath);
+// }
+
+export function getHomePath(filePath: string[]): string {
+  const homeDir = os.homedir();
+  return join(homeDir, ...filePath);
 }
 
+export function getConfigPath(): string {
+  return getHomePath([".config", "mcp-code", "config.yaml"])
+}
+
+export function getLogPath(filePath: string[]): string {
+  return getHomePath([".local", "state", "mcp-code", ...filePath])
+}
 /**
  * 対象ファイルが除外対象にマッチするかをチェックする
  */

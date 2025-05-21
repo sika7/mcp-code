@@ -2,9 +2,9 @@ import { readFileSync, existsSync } from "fs";
 import { parse } from "yaml";
 import { configSchema, Config } from "./schema.js";
 import { createSystemLogger } from "./logs.js";
-import { cwdPath } from "./util.js";
+import { getConfigPath } from "./util.js";
 
-const CONFIG_PATH = cwdPath(["config.yaml"]);
+const CONFIG_PATH = getConfigPath();
 
 export function loadConfig({ configPath = CONFIG_PATH }): Config {
   if (!existsSync(configPath)) {

@@ -7,7 +7,7 @@ import {
 } from "fs";
 import { dirname, join } from "path";
 import { parseISO, differenceInDays } from "date-fns";
-import { cwdPath } from "./util.js";
+import { getLogPath } from "./util.js";
 
 const MAX_AGE_DAYS = 30;
 
@@ -35,7 +35,7 @@ type LoggerOptions = {
 };
 
 const getLogDir = () => {
-  const logDir = cwdPath(["logs"]);
+  const logDir = getLogPath(["logs"]);
   if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 
   return logDir;
@@ -110,7 +110,7 @@ export function createRequestErrorLogger({
 }
 
 const deleteOldLogs = () => {
-  const logDir = cwdPath(["logs"]);
+  const logDir = getLogPath(["logs"]);
   const files = readdirSync(logDir);
   const log = createSystemLogger({});
 
