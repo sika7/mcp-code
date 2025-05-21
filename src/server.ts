@@ -332,17 +332,16 @@ try {
   );
 
   Object.keys(currentProject.scripts).map((name) => {
+    const scriptCmd = currentProject.scripts[name];
     server.tool(
       `script:${name}`,
-      `ユーザー指定のスクリプト. npm run buildなど.`,
+      `ユーザー指定のスクリプト. ${scriptCmd}`,
       {
         requestId: z.string(),
       },
       async ({ requestId }) => {
         // リクエストIDがない場合はランダムなIDを生成
         const finalRequestId = requestId || generateRequestId();
-
-        const scriptCmd = currentProject.scripts[name];
 
         requestLog(
           200,
