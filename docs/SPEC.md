@@ -215,3 +215,13 @@ scriptsは設定ファイルにあるscriptsに記載したものだけ実行で
   "request_id": "12345ABC"
 }
 ```
+
+## データ交換・設定ファイル形式
+
+JSON (application/json)
+YAML (application/yaml)
+XML (application/xml)
+TOML (application/toml)
+INI (text/plain)
+CSV (text/csv)
+TSV (text/tab-separated-values)
