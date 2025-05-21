@@ -86,6 +86,7 @@ try {
 
   server.tool(
     "file.reed",
+    "指定ファイルの内容を返す.",
     { filePath: z.string(), requestId: z.string() },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -120,6 +121,7 @@ try {
 
   server.tool(
     "file.write",
+    "指定ファイルにファイルに書き込む.",
     { filePath: z.string(), content: z.string(), requestId: z.string() },
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -147,6 +149,7 @@ try {
 
   server.tool(
     "file.delete",
+    "指定ファイルを削除.",
     {
       filePath: z.string(),
       requestId: z.string(),
