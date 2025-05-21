@@ -1,5 +1,5 @@
 import { promises as fs, rmSync } from "fs";
-import { createSystemLogger } from "./logs";
+import { createSystemLogger } from "./logs.js";
 
 const log = createSystemLogger({});
 
