@@ -5,12 +5,13 @@
   "type": "module",
   "license": "Apache-2.0",
   "bin": {
-    "weather": "./dist/server.js"
+    "mcp-code": "./dist/server.js"
   },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts"
+    "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts",
+    "test": "echo 'No tests specified' && exit 0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
