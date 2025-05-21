@@ -2,7 +2,7 @@
  * ユーティリティモジュールのテスト
  */
 
-import { assertEqual, runTests } from './test-utils';
+import { assertEqual, runTests, isMainModule } from './test-utils';
 import {
   isExcluded,
   generateRequestId,
@@ -249,6 +249,6 @@ export async function runUtilTests() {
 }
 
 // 単体で実行する場合
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runUtilTests().catch(console.error);
 }

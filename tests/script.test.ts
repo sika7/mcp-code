@@ -2,7 +2,7 @@
  * スクリプト実行モジュールのテスト
  */
 
-import { setupTestDirectory, assertEqual, runTests } from './test-utils';
+import { setupTestDirectory, assertEqual, runTests, isMainModule } from './test-utils';
 import { runScript } from '../src/script';
 import path from 'path';
 import fs from 'fs/promises';
@@ -95,6 +95,6 @@ export async function runScriptTests() {
 }
 
 // 単体で実行する場合
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runScriptTests().catch(console.error);
 }

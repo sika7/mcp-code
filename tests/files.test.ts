@@ -2,7 +2,7 @@
  * ファイル操作モジュールのテスト
  */
 
-import { setupTestDirectory, createTestFile, assertEqual, runTests } from './test-utils';
+import { setupTestDirectory, createTestFile, assertEqual, runTests, isMainModule } from './test-utils';
 import { 
   readTextFile, 
   writeTextFile, 
@@ -207,6 +207,6 @@ export async function runFilesTests() {
 }
 
 // 単体で実行する場合
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runFilesTests().catch(console.error);
 }

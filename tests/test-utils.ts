@@ -4,23 +4,63 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, rmdirSync, unlinkSync } from 'fs';
+import { fileURLToPath } from 'url';
+import os from 'os';
 
-const TEST_DIR = path.join(process.cwd(), 'tests', 'temp');
+// ESモジュールでメインモジュールかどうかを判断する方法
+export function isMainModule(moduleUrl: string) {
+  return process.argv[1] === fileURLToPath(moduleUrl);
+}
+
+// システムの一時ディレクトリ内にテスト用ディレクトリを作成
+const TEST_DIR = path.join(os.tmpdir(), 'mcp-code-test-' + Date.now());
 
 /**
  * テスト用の一時ディレクトリを準備する
  */
 export async function setupTestDirectory() {
-  if (!existsSync(TEST_DIR)) {
-    mkdirSync(TEST_DIR, { recursive: true });
-  } else {
-    // 一時ディレクトリをクリーンアップ
-    const files = await fs.readdir(TEST_DIR);
-    for (const file of files) {
-      await fs.unlink(path.join(TEST_DIR, file));
+  // 既存のディレクトリが存在していたら削除（再帰的に）
+  try {
+    if (existsSync(TEST_DIR)) {
+      // 再帰的にディレクトリとその中のファイルを削除する関数
+      const removeDir = async (dirPath: string) => {
+        const entries = await fs.readdir(dirPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          if (entry.isDirectory()) {
+            await removeDir(fullPath);
+          } else {
+            try {
+              await fs.unlink(fullPath);
+            } catch (err) {
+              console.warn(`Warning: Failed to delete file ${fullPath}`, err);
+            }
+          }
+        }
+        
+        try {
+          await fs.rmdir(dirPath);
+        } catch (err) {
+          console.warn(`Warning: Failed to delete directory ${dirPath}`, err);
+        }
+      };
+      
+      await removeDir(TEST_DIR);
     }
+  } catch (err) {
+    console.warn(`Warning during cleanup: ${err}`);
   }
+  
+  // 新しいディレクトリを作成
+  try {
+    mkdirSync(TEST_DIR, { recursive: true });
+  } catch (err) {
+    console.warn(`Warning: Could not create test directory: ${err}`);
+    throw new Error(`Failed to create test directory: ${err}`);
+  }
+  
   return TEST_DIR;
 }
 
@@ -32,6 +72,13 @@ export async function setupTestDirectory() {
  */
 export async function createTestFile(fileName: string, content: string): Promise<string> {
   const filePath = path.join(TEST_DIR, fileName);
+  
+  // ディレクトリが存在しない場合は作成
+  const dirPath = path.dirname(filePath);
+  if (!existsSync(dirPath)) {
+    mkdirSync(dirPath, { recursive: true });
+  }
+  
   await fs.writeFile(filePath, content, 'utf-8');
   return filePath;
 }
@@ -115,3 +162,40 @@ export async function runTests(tests: Array<{ name: string, fn: () => Promise<vo
   
   return { passed, failed };
 }
+
+// テスト終了時にクリーンアップ
+process.on('exit', () => {
+  try {
+    if (existsSync(TEST_DIR)) {
+      // 同期的にクリーンアップ（終了処理なので非同期は使えない）
+      const removeSync = (dirPath: string) => {
+        if (existsSync(dirPath)) {
+          const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+          
+          for (const entry of entries) {
+            const fullPath = path.join(dirPath, entry.name);
+            if (entry.isDirectory()) {
+              removeSync(fullPath);
+            } else {
+              try {
+                unlinkSync(fullPath);
+              } catch (err) {
+                // エラーを無視（クリーンアップが完全にできないこともある）
+              }
+            }
+          }
+          
+          try {
+            rmdirSync(dirPath);
+          } catch (err) {
+            // エラーを無視
+          }
+        }
+      };
+      
+      removeSync(TEST_DIR);
+    }
+  } catch (err) {
+    // 終了時処理なのでエラーは無視
+  }
+});

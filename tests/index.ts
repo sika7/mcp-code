@@ -4,11 +4,12 @@
  * 全テストを一括実行するためのエントリーポイント
  */
 
-import { runConfigTests } from './config.test';
-import { runFilesTests } from './files.test';
-import { runSafeEditTests } from './safe-edit.test';
-import { runUtilTests } from './util.test';
-import { runScriptTests } from './script.test';
+import { runConfigTests } from './config.test.js';
+import { runFilesTests } from './files.test.js';
+import { runSafeEditTests } from './safe-edit.test.js';
+import { runUtilTests } from './util.test.js';
+import { runScriptTests } from './script.test.js';
+import { isMainModule } from './test-utils.js';
 
 // テストのグループ化
 type TestGroup = {
@@ -59,7 +60,7 @@ async function runAllTests() {
 }
 
 // 直接実行された場合は全テストを実行
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runAllTests().catch(error => {
     console.error('テスト実行中に予期しないエラーが発生しました:', error);
     process.exit(1);

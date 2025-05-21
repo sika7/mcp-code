@@ -2,7 +2,7 @@
  * 安全なファイル編集モジュールのテスト
  */
 
-import { setupTestDirectory, createTestFile, assertEqual, runTests } from './test-utils';
+import { setupTestDirectory, createTestFile, assertEqual, runTests, isMainModule } from './test-utils';
 import { safeEditLines, safeDeleteLines } from '../src/safe-edit';
 import fs from 'fs/promises';
 import path from 'path';
@@ -149,6 +149,6 @@ export async function runSafeEditTests() {
 }
 
 // 単体で実行する場合
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runSafeEditTests().catch(console.error);
 }

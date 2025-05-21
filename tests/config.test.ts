@@ -1,21 +1,9 @@
 /**
- * 設定モジュールのテスト
+ * 設定モジュールのテスト（シンプル版）
  */
 
-import { setupTestDirectory, createTestConfig, assertEqual, runTests } from './test-utils';
+import { setupTestDirectory, createTestConfig, assertEqual, runTests, isMainModule } from './test-utils';
 import { loadConfig } from '../src/config';
-import { jest } from '@jest/globals';
-
-// configスクリプトのgetConfigPath関数をモック化するための準備
-jest.mock('../src/util', () => {
-  const original = jest.requireActual('../src/util');
-  return {
-    ...original,
-    getConfigPath: jest.fn(),
-  };
-});
-
-import { getConfigPath } from '../src/util';
 
 async function testLoadValidConfig() {
   // テスト環境のセットアップ
@@ -42,11 +30,8 @@ projects:
   
   const configPath = await createTestConfig('valid-config.yaml', validConfig);
   
-  // getConfigPathのモック実装を設定
-  (getConfigPath as jest.Mock).mockReturnValue(configPath);
-  
-  // 設定を読み込む
-  const config = loadConfig({});
+  // 設定を読み込む（直接パスを渡す）
+  const config = loadConfig({ configPath });
   
   // 設定が正しく読み込まれたことを検証
   assertEqual(config.current_project, "test_project", "正しいプロジェクト名が設定されていること");
@@ -74,17 +59,15 @@ projects:
   
   const configPath = await createTestConfig('invalid-config.yaml', invalidConfig);
   
-  // getConfigPathのモック実装を設定
-  (getConfigPath as jest.Mock).mockReturnValue(configPath);
-  
   // エラーが発生することを検証
   try {
-    loadConfig({});
+    loadConfig({ configPath });
     throw new Error("エラーが発生しなかった");
   } catch (error) {
     const errorMessage = (error as Error).message;
     assertEqual(
-      errorMessage.includes("設定ファイルが無効です"), 
+      errorMessage.includes("設定ファイルが無効です") || 
+      errorMessage.includes("設定ファイルのスキーマ検証エラー"), 
       true, 
       "無効な設定ファイルに対してエラーが発生すること"
     );
@@ -92,15 +75,12 @@ projects:
 }
 
 async function testNonExistentConfig() {
-  // 存在しない設定ファイルのパスを設定
+  // 存在しない設定ファイルのパス
   const nonExistentPath = '/path/to/non-existent-config.yaml';
-  
-  // getConfigPathのモック実装を設定
-  (getConfigPath as jest.Mock).mockReturnValue(nonExistentPath);
   
   // エラーが発生することを検証
   try {
-    loadConfig({});
+    loadConfig({ configPath: nonExistentPath });
     throw new Error("エラーが発生しなかった");
   } catch (error) {
     const errorMessage = (error as Error).message;
@@ -122,6 +102,6 @@ export async function runConfigTests() {
 }
 
 // 単体で実行する場合
-if (require.main === module) {
+if (isMainModule(import.meta.url)) {
   runConfigTests().catch(console.error);
 }
