@@ -314,7 +314,7 @@ try {
 
   server.tool(
     "fileInsertLine",
-    "指定ファイルの指定行に追記する. ",
+    "指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
       filePath: z.string(),
       lineNumber: z.number(),
@@ -347,7 +347,7 @@ try {
 
   server.tool(
     "fileEditLines",
-    "指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.",
+    "指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
       filePath: z.string(),
       startLine: z.number(),
@@ -387,7 +387,7 @@ try {
 
   server.tool(
     "fileDeleteLines",
-    "指定ファイルの特定行を削除する.",
+    "指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
       filePath: z.string(),
       startLine: z.number(),
