@@ -334,7 +334,7 @@ try {
   Object.keys(currentProject.scripts).map((name) => {
     server.tool(
       `script:${name}`,
-      `ユーザー指定のスクリプト. npm run buildなど.`
+      `ユーザー指定のスクリプト. npm run buildなど.`,
       {
         requestId: z.string(),
       },
