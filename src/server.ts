@@ -12,6 +12,7 @@ import {
   writeTextFile,
 } from "./files.js";
 import {
+  convertToRelativePaths,
   generateRequestId,
   isExcluded,
   resolveSafeProjectPath,
@@ -65,11 +66,16 @@ try {
       }
 
       try {
-        const result = await listFiles(safeFilePath, filter);
+        const files = await listFiles(safeFilePath, filter);
         // 許可されたファイルのみ表示
-        const items = result.filter((item) => !isExcludedFiles(item));
+        const items = files.filter((item) => !isExcludedFiles(item));
 
-        return await createMpcResponse(items.join("\n"), {}, finalRequestId);
+        // 相対パスにして返す。
+        const result = convertToRelativePaths(
+          items.join("\n"),
+          currentProject.src,
+        );
+        return await createMpcResponse(result, {}, finalRequestId);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);

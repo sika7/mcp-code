@@ -19,9 +19,9 @@ export const isExcluded = (filepath: string, patterns: string[]): boolean => {
  */
 export function generateRequestId(): string {
   // シンプルなUUID v4生成実装例
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -141,3 +141,83 @@ export function ensureDirectoryExists(
   }
 }
 
+/**
+ * プロジェクトルートのパスを正規化する
+ *
+ * @param projectRoot プロジェクトルートのパス
+ * @param pathSeparator パス区切り文字
+ * @returns 正規化されたルートパス
+ */
+function normalizeRootPath(projectRoot: string, pathSeparator: string): string {
+  return projectRoot.endsWith(pathSeparator)
+    ? projectRoot
+    : `${projectRoot}${pathSeparator}`;
+}
+
+/**
+ * 現在のシステムに適したパス検出用の正規表現を取得する
+ *
+ * @returns パスを検出するための正規表現
+ */
+function getPathDetectionPattern(): RegExp {
+  return process.platform === "win32"
+    ? /([A-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*)/gi // Windows パス
+    : /(\/(?:[^\/\0:*?"<>|\r\n]+\/)*[^\/\0:*?"<>|\r\n]*)/g; // Unix パス
+}
+
+/**
+ * 絶対パスから相対パスへの変換処理
+ *
+ * @param absolutePath 絶対パス
+ * @param normalizedRoot 正規化されたルートパス
+ * @returns 変換された相対パス
+ */
+function convertPathToRelative(
+  absolutePath: string,
+  normalizedRoot: string,
+): string {
+  // パスが有効かチェック
+  if (!absolutePath || absolutePath.length < normalizedRoot.length) {
+    return absolutePath;
+  }
+
+  // パスがプロジェクトルートで始まるかチェック
+  if (absolutePath.startsWith(normalizedRoot)) {
+    // プロジェクトルートからの相対パスに変換
+    const relativePath = absolutePath.substring(normalizedRoot.length);
+
+    return relativePath;
+  }
+
+  return absolutePath;
+}
+
+/**
+ * システムの絶対パスからプロジェクトルートを引いて相対パスを取得する関数
+ *
+ * @param text 絶対パスを含むテキスト
+ * @param projectRoot プロジェクトルートの絶対パス
+ * @param pathSeparator パス区切り文字
+ * @returns 相対パスに変換されたテキスト
+ */
+export function convertToRelativePaths(
+  text: string,
+  projectRoot: string,
+  pathSeparator?: string,
+): string {
+  // パス区切り文字（デフォルト: /, \）
+  pathSeparator = pathSeparator ?? (process.platform === "win32" ? "\\" : "/");
+
+  // プロジェクトルートのパスを正規化
+  const normalizedRoot = normalizeRootPath(projectRoot, pathSeparator);
+
+  // パスを検出するための正規表現パターンを取得
+  const pathPattern = getPathDetectionPattern();
+
+  // テキスト内のパスを検出して変換
+  const resultText = text.replace(pathPattern, (match) => {
+    return convertPathToRelative(match, normalizedRoot);
+  });
+
+  return resultText;
+}
