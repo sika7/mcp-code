@@ -9,6 +9,7 @@ import { runFilesTests } from './files.test.js';
 import { runSafeEditTests } from './safe-edit.test.js';
 import { runUtilTests } from './util.test.js';
 import { runScriptTests } from './script.test.js';
+import { runDirectoryTests } from './directory.test.js';
 import { isMainModule } from './test-utils.js';
 
 // テストのグループ化
@@ -24,6 +25,7 @@ const testGroups: TestGroup[] = [
   { name: '安全なファイル編集モジュールテスト', runFn: runSafeEditTests },
   { name: 'ユーティリティモジュールテスト', runFn: runUtilTests },
   { name: 'スクリプト実行モジュールテスト', runFn: runScriptTests },
+  { name: 'ディレクトリ操作モジュールテスト', runFn: runDirectoryTests },
 ];
 
 /**
