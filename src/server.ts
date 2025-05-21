@@ -37,6 +37,7 @@ import {
   resolveSafeProjectPath,
 } from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
+import { createDirectory, removeDirectory } from "./directory.js";
 
 try {
   const config = loadConfig({});
@@ -102,6 +103,68 @@ try {
         // 相対パスにして返す。
         const result = convertToRelativePaths(tree, currentProject.src);
         return await createMpcResponse(result, {}, finalRequestId);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "createDirectory",
+    "ディレクトリを作成する.",
+    {
+      filePath: z.string(),
+      requestId: z.string().optional(),
+    },
+    async ({ filePath, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const result = await createDirectory(safeFilePath);
+        return await createMpcResponse(result);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "removeDirectory",
+    "ディレクトリを削除する.",
+    {
+      filePath: z.string(),
+      requestId: z.string().optional(),
+    },
+    async ({ filePath, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const result = await removeDirectory(safeFilePath);
+        return await createMpcResponse(result);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
