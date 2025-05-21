@@ -6,6 +6,7 @@ import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
 import { runScript } from "./script.js";
 import {
   deleteFile,
+  listFiles,
   parseFileContent,
   readTextFile,
   writeTextFile,
@@ -47,6 +48,37 @@ try {
   };
 
   server.tool(
+    "file.list",
+    "ファイル一覧を取得する. filter: regex",
+    { path: z.string(), filter: z.string().optional(), requestId: z.string() },
+    async ({ path, filter, requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(path, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const result = await listFiles(safeFilePath, filter);
+        // 許可されたファイルのみ表示
+        const items = result.filter((item) => !isExcludedFiles(item));
+
+        return await createMpcResponse(items.join("\n"), {}, finalRequestId);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
     "file.reed",
     { filePath: z.string(), requestId: z.string() },
     async ({ filePath, requestId }) => {
@@ -66,7 +98,7 @@ try {
         const content = await readTextFile(safeFilePath);
         const lines = parseFileContent(content);
 
-        return createMpcResponse(
+        return await createMpcResponse(
           content,
           {
             lines: lines,
@@ -98,11 +130,11 @@ try {
 
       try {
         const message = await writeTextFile(safeFilePath, content);
-        return createMpcResponse(message);
+        return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
       }
     },
   );
@@ -129,7 +161,7 @@ try {
 
       try {
         const message = await deleteFile(safeFilePath);
-        return createMpcResponse(message);
+        return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
@@ -161,7 +193,7 @@ try {
         try {
           const result = await runScript(name, scriptCmd, currentProject.src);
 
-          return createMpcResponse(result);
+          return await createMpcResponse(result);
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : String(error);

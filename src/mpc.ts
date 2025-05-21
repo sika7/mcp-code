@@ -37,7 +37,7 @@ export async function createMpcResponse(
     ...(metadata || {}),
   };
 
-  let structuredContent = {};
+  let structuredContent = undefined;
 
   if (fileContent) {
     try {
