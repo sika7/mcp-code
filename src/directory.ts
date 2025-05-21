@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+import { promises as fs, rmSync } from "fs";
 import { createSystemLogger } from "./logs";
 
 const log = createSystemLogger({});
@@ -46,3 +46,16 @@ export async function removeDirectory(dirPath: string) {
   }
   return `ディレクトリを削除しました: ${dirPath}`;
 }
+
+/**
+ * 指定されたディレクトリを同期的に再帰削除する
+ * @param dirPath 削除したいディレクトリのパス
+ */
+export function removeDirectorySync(dirPath: string): void {
+  try {
+    rmSync(dirPath, { recursive: true, force: true });
+    console.log(`ディレクトリを削除しました: ${dirPath}`);
+  } catch (err: any) {
+    console.error(`ディレクトリの削除に失敗しました: ${err.message}`);
+    throw err;
+  }
