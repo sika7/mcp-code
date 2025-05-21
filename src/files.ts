@@ -12,6 +12,9 @@ const log = createSystemLogger({});
  */
 export async function readTextFile(filePath: string): Promise<string> {
   try {
+    // ファイルが存在するか確認
+    await fs.access(filePath);
+
     log({
       logLevel: "INFO",
       message: `Reading file: ${filePath}`,
@@ -276,31 +279,3 @@ export function parseFileContent(content: string) {
   };
 }
 
-/**
- * ローカルファイルを取得し内容を返す関数
- * @param filePath - 取得したいファイルのパス
- * @returns ファイルの内容
- */
-export async function getFileWith(filePath: string): Promise<string> {
-  try {
-    // ファイルが存在するか確認
-    await fs.access(filePath);
-
-    // ファイルの内容を取得
-    const fileContent = await fs.readFile(filePath, "utf-8");
-    return fileContent;
-  } catch (error) {
-    if (error instanceof Error) {
-      log({
-        logLevel: "ERROR",
-        message: `Error reading file: ${error.message}`,
-      });
-    } else {
-      log({
-        logLevel: "ERROR",
-        message: "Unknown error occurred while reading file",
-      });
-    }
-    throw error;
-  }
-}
