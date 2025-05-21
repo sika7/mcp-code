@@ -8,6 +8,7 @@ import {
   deleteFile,
   deleteLines,
   editLines,
+  generateDirectoryTree,
   insertLine,
   listFiles,
   parseFileContent,
@@ -37,23 +38,64 @@ try {
 
   const globalExcludedFiles = config.excluded_files;
 
-  const isExcludedFiles = (filePath: string) => {
-    if (globalExcludedFiles) {
-      // globalなexcluded_filesが設定されてればチェック
-      if (isExcluded(filePath, globalExcludedFiles)) return true;
-    }
+  let allExcludedFiles: string[] = [];
+  if (globalExcludedFiles) {
+    // globalなexcluded_filesが設定されてればマージ
+    allExcludedFiles = [...globalExcludedFiles];
+  }
 
-    if (currentProject.excluded_files) {
-      // excluded_filesが設定されてればチェック
-      if (isExcluded(filePath, currentProject.excluded_files)) return true;
-    }
+  if (currentProject.excluded_files) {
+    // excluded_filesが設定されてればマージ
+    allExcludedFiles = [...allExcludedFiles, ...currentProject.excluded_files];
+  }
+
+  const isExcludedFiles = (filePath: string) => {
+    // 除外ファイルをチェック
+    if (isExcluded(filePath, allExcludedFiles)) return true;
 
     return false;
   };
 
   server.tool(
+    "directory.tree",
+    "プロジェクトのファイルをツリー表示する. exclude: glob風のパターン",
+    {
+      path: z.string(),
+      exclude: z.array(z.string()).optional(),
+      requestId: z.string(),
+    },
+    async ({ path, exclude = [], requestId }) => {
+      const finalRequestId = requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(path, currentProject.src);
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたパスはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const mergeExcluded = [...allExcludedFiles, ...exclude];
+        const tree = await generateDirectoryTree(safeFilePath, {
+          exclude: mergeExcluded,
+        });
+        // 相対パスにして返す。
+        const result = convertToRelativePaths(tree, currentProject.src);
+        return await createMpcResponse(result, {}, finalRequestId);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
     "file.list",
-    "ファイル一覧を取得する. filter: regex",
+    "指定ディレクトリのファイル一覧を取得する. filter: regex",
     { path: z.string(), filter: z.string().optional(), requestId: z.string() },
     async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -239,7 +281,12 @@ try {
       }
 
       try {
-        const message = await editLines(safeFilePath, startLine, endLine, content);
+        const message = await editLines(
+          safeFilePath,
+          startLine,
+          endLine,
+          content,
+        );
         return await createMpcResponse(message);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);

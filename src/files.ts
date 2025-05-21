@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { createSystemLogger } from "./logs.js";
-import { existsSync } from "fs";
+import { existsSync, readdirSync, statSync } from "fs";
 
 const log = createSystemLogger({});
 
@@ -315,4 +315,87 @@ export function parseFileContent(content: string) {
     firstLine: lines[0],
     lastLine: lines[lines.length - 1],
   };
+}
+
+interface TreeOptions {
+  maxDepth?: number; // 最大深さ制限
+  exclude?: string[]; // 除外パターン (glob風のパターン)
+  currentDepth?: number; // 内部使用: 現在の深さ
+}
+
+/**
+ * ディレクトリツリーを生成する関数
+ * @param dirPath 対象ディレクトリのパス
+ * @param options 設定オプション
+ * @param indent インデント文字列（内部使用）
+ * @returns ツリー表示用の文字列
+ */
+export async function generateDirectoryTree(
+  dirPath: string,
+  options: TreeOptions = {},
+  indent: string = "",
+): Promise<string> {
+  const currentDepth = options.currentDepth || 1;
+  const maxDepth = options.maxDepth || Number.POSITIVE_INFINITY;
+  const exclude = options.exclude || [];
+
+  if (currentDepth > maxDepth) {
+    return `${indent}... (最大深さ制限に達しました)\n`;
+  }
+
+  let result = "";
+
+  try {
+    const items = await fs.readdir(dirPath);
+
+    // 除外パターンに一致しないアイテムのみをフィルタリング
+    const filteredItems = items.filter((item) => {
+      return !exclude.some((pattern) => {
+        if (pattern.startsWith("*") && pattern.endsWith("*")) {
+          const middle = pattern.slice(1, -1);
+          return item.includes(middle);
+        } else if (pattern.startsWith("*")) {
+          const suffix = pattern.slice(1);
+          return item.endsWith(suffix);
+        } else if (pattern.endsWith("*")) {
+          const prefix = pattern.slice(0, -1);
+          return item.startsWith(prefix);
+        }
+        return item === pattern;
+      });
+    });
+
+    // すべてのアイテムの処理を順番に実行
+    for (let i = 0; i < filteredItems.length; i++) {
+      const item = filteredItems[i];
+      const itemPath = path.join(dirPath, item);
+      const isLast = i === filteredItems.length - 1;
+
+      try {
+        const stats = await fs.stat(itemPath);
+        const connector = isLast ? "└── " : "├── ";
+
+        result += `${indent}${connector}${item}\n`;
+
+        if (stats.isDirectory()) {
+          const childIndent = indent + (isLast ? "    " : "│   ");
+          const childOptions: TreeOptions = {
+            ...options,
+            currentDepth: currentDepth + 1,
+          };
+          result += await generateDirectoryTree(
+            itemPath,
+            childOptions,
+            childIndent,
+          );
+        }
+      } catch (err) {
+        result += `${indent}${isLast ? "└── " : "├── "}${item} [アクセスエラー]\n`;
+      }
+    }
+  } catch (err) {
+    return `${indent}[ディレクトリの読み取りエラー: ${(err as Error).message}]\n`;
+  }
+
+  return result;
 }
