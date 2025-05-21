@@ -93,7 +93,20 @@ MCP-Codeは、Model Context Protocol (MCP) SDKを使用してLLM（大規模言�
 - fileInsertLine: 指定ファイルの指定行に追記
 - fileEditLines: 指定ファイルの指定行を編集
 - fileDeleteLines: 指定ファイルの特定行を削除
-- script_[name]: 設定ファイルで定義されたスクリプトを実行
+- script\_[name]: 設定ファイルで定義されたスクリプトを実行
+
+## 技術スタック
+
+- TypeScript
+- Model Context Protocol SDK
+- Node.js
+
+## セキュリティ考慮事項
+
+- 除外ファイル設定による機密ファイルの保護
+- スクリプト実行の制限による安全性確保
+- パス正規化による脆弱性対策
+
 ## コントリビューション
 
 プロジェクトへの貢献に興味がある方は、[CONTRIBUTING.md](CONTRIBUTING.md)をご覧ください。
@@ -112,22 +125,4 @@ MCP-CodeはApache License 2.0の下で提供されています。詳細につい
 
 - [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk): MIT ライセンス
 - その他の依存ライブラリもMITまたはISC（MIT互換）ライセンスですが、Apache License 2.0はこれらと互換性があります。
-
-### 主要な依存ライブラリ
-
-- [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk): MIT ライセンス
-- その他の依存ライブラリもすべてMITまたはISC（MIT互換）ライセンスです。
-- script\_[name]: 設定ファイルで定義されたスクリプトを実行
-
-## 技術スタック
-
-- TypeScript
-- Model Context Protocol SDK
-- Node.js
-
-## セキュリティ考慮事項
-
-- 除外ファイル設定による機密ファイルの保護
-- スクリプト実行の制限による安全性確保
-- パス正規化による脆弱性対策
 
