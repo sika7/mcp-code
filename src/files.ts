@@ -144,10 +144,11 @@ export async function listFiles(
  * @param newContent 新しい行の内容
  * @returns 成功メッセージ
  */
-export async function editLine(
+export async function editLines(
   filePath: string,
-  lineNumber: number,
-  newContent: string,
+  startLineNumber: number,
+  endLineNumber: number,
+  newContent: string | string[],
 ): Promise<string> {
   try {
     // ファイルの内容を読み込む
@@ -155,30 +156,47 @@ export async function editLine(
     const lines = content.split("\n");
 
     // 行番号のバリデーション
-    if (lineNumber < 1 || lineNumber > lines.length) {
+    if (startLineNumber < 1 || startLineNumber > lines.length) {
       throw new Error(
-        `Line number out of range: ${lineNumber} (file has ${lines.length} lines)`,
+        `Start line number out of range: ${startLineNumber} (file has ${lines.length} lines)`,
       );
     }
 
-    // 指定行を更新
-    lines[lineNumber - 1] = newContent;
+    if (endLineNumber < startLineNumber || endLineNumber > lines.length) {
+      throw new Error(
+        `End line number out of range: ${endLineNumber} (file has ${lines.length} lines)`,
+      );
+    }
+
+    // 置換する行数
+    const numLinesToReplace = endLineNumber - startLineNumber + 1;
+
+    // 新しい内容を準備
+    let newLines: string[];
+    if (Array.isArray(newContent)) {
+      newLines = newContent;
+    } else {
+      newLines = newContent.split("\n");
+    }
+
+    // 指定範囲の行を更新
+    lines.splice(startLineNumber - 1, numLinesToReplace, ...newLines);
 
     // ファイルに書き戻す
     await writeTextFile(filePath, lines.join("\n"));
 
     log({
-      logLevel: "ERROR",
-      message: `Successfully edited line ${lineNumber} in ${filePath}`,
+      logLevel: "INFO",
+      message: `Successfully edited lines ${startLineNumber}-${endLineNumber} in ${filePath}`,
     });
-    return `Successfully edited line ${lineNumber} in ${filePath}`;
+    return `Successfully edited lines ${startLineNumber}-${endLineNumber} in ${filePath}`;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     log({
       logLevel: "ERROR",
-      message: `Error editing line: ${errorMsg}`,
+      message: `Error editing lines: ${errorMsg}`,
     });
-    throw new Error(`Failed to edit line in ${filePath}: ${errorMsg}`);
+    throw new Error(`Failed to edit lines in ${filePath}: ${errorMsg}`);
   }
 }
 
