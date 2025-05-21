@@ -9,7 +9,8 @@ import {
   deleteFile, 
   listFiles, 
   generateDirectoryTree,
-  parseFileContent
+  parseFileContent,
+  fileMoveOrRename
 } from '../src/files';
 import path from 'path';
 import fs from 'fs/promises';
@@ -194,6 +195,126 @@ async function testGenerateDirectoryTree() {
   assertEqual(excludedTree.includes('deep.txt'), false, 'ネストされた除外が適用されていること');
 }
 
+async function testFileMoveOrRename() {
+  // テスト環境のセットアップ
+  const testDir = await setupTestDirectory();
+  
+  // === テスト1: ファイルのリネーム ===
+  const originalFileName = 'original-file.txt';
+  const renamedFileName = 'renamed-file.txt';
+  const content = 'これはファイル移動テストの内容です。\n2行目の内容です。';
+  
+  // テストファイルの作成
+  const originalFilePath = await createTestFile(originalFileName, content);
+  const renamedFilePath = path.join(testDir, renamedFileName);
+  
+  // ファイルのリネーム
+  const renameMessage = await fileMoveOrRename(originalFilePath, renamedFilePath);
+  
+  // 検証
+  assertEqual(renameMessage.includes('移動完了'), true, 'リネーム成功メッセージが返されること');
+  assertEqual(existsSync(originalFilePath), false, '元のファイルが存在しないこと');
+  assertEqual(existsSync(renamedFilePath), true, 'リネーム後のファイルが存在すること');
+  
+  // ファイル内容が保持されることを確認
+  const renamedContent = await fs.readFile(renamedFilePath, 'utf-8');
+  assertEqual(renamedContent, content, 'ファイル内容が保持されること');
+  
+  // === テスト2: 別ディレクトリへのファイル移動 ===
+  const moveTestFile = 'move-test.txt';
+  const moveTestContent = 'これは移動テスト用のファイルです。';
+  const subDir = 'subdirectory';
+  const subDirPath = path.join(testDir, subDir);
+  
+  // サブディレクトリを作成
+  await fs.mkdir(subDirPath, { recursive: true });
+  
+  // テストファイルの作成
+  const moveTestFilePath = await createTestFile(moveTestFile, moveTestContent);
+  const movedFilePath = path.join(subDirPath, 'moved-file.txt');
+  
+  // ファイルの移動
+  const moveMessage = await fileMoveOrRename(moveTestFilePath, movedFilePath);
+  
+  // 検証
+  assertEqual(moveMessage.includes('移動完了'), true, '移動成功メッセージが返されること');
+  assertEqual(existsSync(moveTestFilePath), false, '元のファイルが存在しないこと');
+  assertEqual(existsSync(movedFilePath), true, '移動後のファイルが存在すること');
+  
+  // ファイル内容が保持されることを確認
+  const movedContent = await fs.readFile(movedFilePath, 'utf-8');
+  assertEqual(movedContent, moveTestContent, '移動後もファイル内容が保持されること');
+  
+  // === テスト3: ディレクトリの移動 ===
+  const sourceDirName = 'source-directory';
+  const targetDirName = 'target-directory';
+  const sourceDirPath = path.join(testDir, sourceDirName);
+  const targetDirPath = path.join(testDir, targetDirName);
+  
+  // ソースディレクトリとファイルを作成
+  await fs.mkdir(sourceDirPath, { recursive: true });
+  const dirTestFilePath = path.join(sourceDirPath, 'dir-test-file.txt');
+  await fs.writeFile(dirTestFilePath, 'ディレクトリ移動テスト用ファイル');
+  
+  // ディレクトリの移動
+  const dirMoveMessage = await fileMoveOrRename(sourceDirPath, targetDirPath);
+  
+  // 検証
+  assertEqual(dirMoveMessage.includes('移動完了'), true, 'ディレクトリ移動成功メッセージが返されること');
+  assertEqual(existsSync(sourceDirPath), false, '元のディレクトリが存在しないこと');
+  assertEqual(existsSync(targetDirPath), true, '移動後のディレクトリが存在すること');
+  assertEqual(existsSync(path.join(targetDirPath, 'dir-test-file.txt')), true, 'ディレクトリ内のファイルも移動されること');
+  
+  // === テスト4: 存在しないファイル/ディレクトリの移動（エラーケース） ===
+  const nonExistentPath = path.join(testDir, 'non-existent-file.txt');
+  const targetPath = path.join(testDir, 'target-file.txt');
+  
+  try {
+    await fileMoveOrRename(nonExistentPath, targetPath);
+    throw new Error('エラーが発生しなかった');
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    assertEqual(
+      errorMessage.includes('ENOENT') || errorMessage.includes('no such file'),
+      true,
+      '存在しないファイルの移動でエラーが発生すること'
+    );
+  }
+  
+  // === テスト5: 移動先が既に存在する場合（エラーケース） ===
+  const existingFile1 = await createTestFile('existing1.txt', 'content1');
+  const existingFile2 = await createTestFile('existing2.txt', 'content2');
+  
+  try {
+    await fileMoveOrRename(existingFile1, existingFile2);
+    throw new Error('エラーが発生しなかった');
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+    assertEqual(
+      errorMessage.includes('すでにファイルまたはディレクトリが存在します'),
+      true,
+      '移動先が既に存在する場合にエラーが発生すること'
+    );
+  }
+  
+  // 両方のファイルがまだ存在することを確認（移動されていないことの確認）
+  assertEqual(existsSync(existingFile1), true, '移動に失敗した場合、元のファイルが残存すること');
+  assertEqual(existsSync(existingFile2), true, '移動に失敗した場合、移動先のファイルが変更されないこと');
+  
+  // === テスト6: ネストされたディレクトリへの移動（自動ディレクトリ作成） ===
+  const nestedTestFile = await createTestFile('nested-test.txt', 'nested content');
+  const nestedTargetPath = path.join(testDir, 'deep', 'nested', 'path', 'nested-file.txt');
+  
+  // ネストされたパスへの移動
+  const nestedMoveMessage = await fileMoveOrRename(nestedTestFile, nestedTargetPath);
+  
+  // 検証
+  assertEqual(nestedMoveMessage.includes('移動完了'), true, 'ネストされたディレクトリへの移動が成功すること');
+  assertEqual(existsSync(nestedTestFile), false, '元のファイルが存在しないこと');
+  assertEqual(existsSync(nestedTargetPath), true, 'ネストされたパスにファイルが移動されること');
+  assertEqual(existsSync(path.dirname(nestedTargetPath)), true, '必要なディレクトリが自動作成されること');
+}
+
 // メインのテスト実行関数
 export async function runFilesTests() {
   await runTests([
@@ -203,6 +324,7 @@ export async function runFilesTests() {
     { name: 'ファイル一覧取得テスト', fn: testListFiles },
     { name: 'ファイル内容解析テスト', fn: testParseFileContent },
     { name: 'ディレクトリツリー生成テスト', fn: testGenerateDirectoryTree },
+    { name: 'ファイル移動・リネームテスト', fn: testFileMoveOrRename },
   ]);
 }
 
