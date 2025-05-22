@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as path from "path";
 import * as readline from "readline";
 import { createSystemLogger } from "./logs.js";
 import { z } from "zod";
@@ -62,6 +63,37 @@ interface FileContent {
   lines: string[];
 }
 
+// 新しい型定義（横断検索用）
+interface NormalizedDirectoryGrepOptions extends NormalizedGrepOptions {
+  fileTypes: string[];
+  recursive: boolean;
+  exclude: string[];
+  includeHidden: boolean;
+  maxFileSize: number;
+}
+
+interface FileGrepResult {
+  filePath: string;
+  matches: GrepMatch[];
+  matchCount: number;
+  fileSize: number;
+  totalLines?: number;
+  truncated: boolean;
+  error?: string;
+}
+
+interface DirectoryGrepResult {
+  searchPattern: string;
+  searchPath: string;
+  totalMatches: number;
+  filesWithMatches: number;
+  filesSearched: number;
+  totalFiles: number;
+  results: FileGrepResult[];
+  truncated: boolean;
+  skippedFiles: string[];
+}
+
 type MatcherFunction = (line: string) => MatchResult;
 
 // 設定関連の純粋関数
@@ -77,11 +109,145 @@ export function normalizeOptions(
   };
 }
 
+export function normalizeDirectoryOptions(
+  options: DirectoryGrepOptionsInput = {},
+): NormalizedDirectoryGrepOptions {
+  const baseOptions = normalizeOptions(options);
+  return {
+    ...baseOptions,
+    fileTypes: options.fileTypes ?? [],
+    recursive: options.recursive ?? true,
+    exclude: options.exclude ?? [
+      "node_modules",
+      "dist",
+      ".git",
+      ".next",
+      "build",
+      "coverage",
+    ],
+    includeHidden: options.includeHidden ?? false,
+    maxFileSize: options.maxFileSize ?? 10 * 1024 * 1024, // 10MB
+  };
+}
+
 export function shouldUseStreamProcessing(
   fileSize: number,
   threshold: number = 50 * 1024 * 1024,
 ): boolean {
   return fileSize > threshold;
+}
+
+// ファイルフィルタリング関数
+export function shouldIncludeFile(
+  filePath: string,
+  fileName: string,
+  options: NormalizedDirectoryGrepOptions,
+): boolean {
+  // 隠しファイルのチェック
+  if (!options.includeHidden && fileName.startsWith(".")) {
+    return false;
+  }
+
+  // 除外パターンのチェック
+  const relativePath = path.relative(process.cwd(), filePath);
+  for (const excludePattern of options.exclude) {
+    if (
+      relativePath.includes(excludePattern) ||
+      fileName.includes(excludePattern)
+    ) {
+      return false;
+    }
+  }
+
+  // ファイルタイプのチェック
+  if (options.fileTypes.length > 0) {
+    const ext = path.extname(fileName);
+    return options.fileTypes.some((type) =>
+      type.startsWith(".") ? ext === type : ext === `.${type}`,
+    );
+  }
+
+  // デフォルトでテキストファイルのみ対象
+  const textExtensions = [
+    ".txt",
+    ".md",
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".xml",
+    ".html",
+    ".css",
+    ".scss",
+    ".less",
+    ".py",
+    ".java",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".php",
+    ".rb",
+    ".go",
+    ".rs",
+    ".swift",
+    ".kt",
+    ".scala",
+    ".sh",
+    ".bash",
+    ".ps1",
+    ".sql",
+    ".r",
+    ".m",
+    ".pl",
+    ".lua",
+    ".vim",
+    ".conf",
+  ];
+
+  const ext = path.extname(fileName).toLowerCase();
+  return textExtensions.includes(ext) || ext === "";
+}
+
+export async function* walkDirectory(
+  dirPath: string,
+  options: NormalizedDirectoryGrepOptions,
+): AsyncIterable<string> {
+  try {
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+
+      if (entry.isDirectory()) {
+        // 除外ディレクトリのチェック
+        if (options.exclude.some((pattern) => entry.name.includes(pattern))) {
+          continue;
+        }
+
+        if (options.recursive) {
+          yield* walkDirectory(fullPath, options);
+        }
+      } else if (entry.isFile()) {
+        if (shouldIncludeFile(fullPath, entry.name, options)) {
+          try {
+            const stats = await fs.promises.stat(fullPath);
+            if (stats.size <= options.maxFileSize) {
+              yield fullPath;
+            }
+          } catch (error) {
+            // ファイルアクセスエラーは無視
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // ディレクトリアクセスエラーは無視
+  }
 }
 
 // マッチング関連の純粋関数
@@ -176,6 +342,17 @@ export function validateFilePath(filePath: string): void {
   const stats = fs.statSync(filePath);
   if (stats.isDirectory()) {
     throw new Error(`Path is a directory: ${filePath}`);
+  }
+}
+
+export function validateDirectoryPath(dirPath: string): void {
+  if (!fs.existsSync(dirPath)) {
+    throw new Error(`Directory not found: ${dirPath}`);
+  }
+
+  const stats = fs.statSync(dirPath);
+  if (!stats.isDirectory()) {
+    throw new Error(`Path is not a directory: ${dirPath}`);
   }
 }
 
@@ -328,7 +505,7 @@ export async function processLinesStream(
   return { matches: results, truncated, totalLinesProcessed };
 }
 
-// 統合関数
+// 単一ファイル検索関数
 export async function fileGrep(
   filePath: string,
   pattern: string,
@@ -382,6 +559,130 @@ export async function fileGrep(
   }
 }
 
+// 新しい横断検索関数
+export async function directoryGrep(
+  dirPath: string,
+  pattern: string,
+  options: DirectoryGrepOptionsInput = {},
+): Promise<DirectoryGrepResult> {
+  try {
+    validateDirectoryPath(dirPath);
+    const normalizedOptions = normalizeDirectoryOptions(options);
+    const log = createSystemLogger({});
+
+    const results: FileGrepResult[] = [];
+    const skippedFiles: string[] = [];
+    let totalMatches = 0;
+    let filesWithMatches = 0;
+    let filesSearched = 0;
+    let totalFiles = 0;
+    let globalTruncated = false;
+
+    // 最大ファイル数制限
+    const maxFilesToSearch = 1000;
+    const maxResultsPerFile =
+      Math.floor(normalizedOptions.maxResults / 10) || 10;
+
+    log({
+      logLevel: "INFO",
+      message: `Starting directory search: ${dirPath} for pattern: ${pattern}`,
+    });
+
+    for await (const filePath of walkDirectory(dirPath, normalizedOptions)) {
+      totalFiles++;
+
+      if (filesSearched >= maxFilesToSearch) {
+        skippedFiles.push(
+          `... and ${totalFiles - filesSearched} more files (limit reached)`,
+        );
+        globalTruncated = true;
+        break;
+      }
+
+      try {
+        const fileResult = await fileGrep(filePath, pattern, {
+          ...normalizedOptions,
+          maxResults: maxResultsPerFile,
+        });
+
+        filesSearched++;
+
+        if (fileResult.matchCount > 0) {
+          const relativePath = path.relative(dirPath, filePath);
+          const result: FileGrepResult = {
+            filePath: relativePath,
+            matches: fileResult.matches,
+            matchCount: fileResult.matchCount,
+            fileSize: fileResult.fileSize,
+            truncated: fileResult.truncated,
+          };
+
+          if ("totalLines" in fileResult) {
+            result.totalLines = fileResult.totalLines;
+          }
+
+          results.push(result);
+          totalMatches += fileResult.matchCount;
+          filesWithMatches++;
+
+          if (fileResult.truncated) {
+            globalTruncated = true;
+          }
+        }
+
+        // 結果数制限チェック
+        if (totalMatches >= normalizedOptions.maxResults) {
+          globalTruncated = true;
+          break;
+        }
+      } catch (error) {
+        const relativePath = path.relative(dirPath, filePath);
+        skippedFiles.push(`${relativePath}: ${(error as Error).message}`);
+      }
+    }
+
+    log({
+      logLevel: "INFO",
+      message: `Search completed: ${filesWithMatches}/${filesSearched} files with matches, ${totalMatches} total matches`,
+    });
+
+    return {
+      searchPattern: pattern,
+      searchPath: dirPath,
+      totalMatches,
+      filesWithMatches,
+      filesSearched,
+      totalFiles,
+      results,
+      truncated: globalTruncated,
+      skippedFiles,
+    };
+  } catch (error) {
+    throw new Error(`Directory grep error: ${(error as Error).message}`);
+  }
+}
+
+// プロジェクト全体検索のヘルパー関数
+export async function projectGrep(
+  pattern: string,
+  options: DirectoryGrepOptionsInput = {},
+): Promise<DirectoryGrepResult> {
+  const projectRoot = process.cwd();
+  return directoryGrep(projectRoot, pattern, {
+    recursive: true,
+    exclude: [
+      "node_modules",
+      "dist",
+      ".git",
+      ".next",
+      "build",
+      "coverage",
+      "logs",
+    ],
+    ...options,
+  });
+}
+
 // Zodスキーマ定義
 export const FileGrepOptionsSchema = z
   .object({
@@ -415,6 +716,35 @@ export const FileGrepOptionsSchema = z
   })
   .strict();
 
+export const DirectoryGrepOptionsSchema = FileGrepOptionsSchema.extend({
+  fileTypes: z
+    .array(z.string())
+    .default([])
+    .describe("検索対象のファイル拡張子（例: ['.ts', '.js']）"),
+
+  recursive: z
+    .boolean()
+    .default(true)
+    .describe("サブディレクトリも再帰的に検索するか"),
+
+  exclude: z
+    .array(z.string())
+    .default(["node_modules", "dist", ".git", ".next", "build", "coverage"])
+    .describe("除外するディレクトリ/ファイルパターン"),
+
+  includeHidden: z
+    .boolean()
+    .default(false)
+    .describe("隠しファイル（.で始まるファイル）も検索対象に含めるか"),
+
+  maxFileSize: z
+    .number()
+    .int()
+    .min(1024)
+    .default(10 * 1024 * 1024)
+    .describe("検索対象ファイルの最大サイズ（バイト）"),
+}).strict();
+
 export const FileGrepArgsSchema = z
   .object({
     filePath: z.string().min(1).describe("検索対象のファイルパス"),
@@ -427,6 +757,34 @@ export const FileGrepArgsSchema = z
   })
   .strict();
 
+export const DirectoryGrepArgsSchema = z
+  .object({
+    dirPath: z.string().min(1).describe("検索対象のディレクトリパス"),
+
+    pattern: z.string().min(1).describe("検索する文字列または正規表現パターン"),
+
+    options: DirectoryGrepOptionsSchema.optional().describe("検索オプション"),
+
+    requestId: z.string().optional().describe("リクエストID"),
+  })
+  .strict();
+
+export const ProjectGrepArgsSchema = z
+  .object({
+    pattern: z.string().min(1).describe("検索する文字列または正規表現パターン"),
+
+    options: DirectoryGrepOptionsSchema.optional().describe("検索オプション"),
+
+    requestId: z.string().optional().describe("リクエストID"),
+  })
+  .strict();
+
 // 型定義（Zodから自動生成）
 export type FileGrepOptions = z.infer<typeof FileGrepOptionsSchema>;
+export type DirectoryGrepOptions = z.infer<typeof DirectoryGrepOptionsSchema>;
+export type DirectoryGrepOptionsInput = Partial<
+  z.infer<typeof DirectoryGrepOptionsSchema>
+>;
 export type FileGrepArgs = z.infer<typeof FileGrepArgsSchema>;
+export type DirectoryGrepArgs = z.infer<typeof DirectoryGrepArgsSchema>;
+export type ProjectGrepArgs = z.infer<typeof ProjectGrepArgsSchema>;
