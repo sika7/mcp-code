@@ -664,10 +664,10 @@ export async function directoryGrep(
 
 // プロジェクト全体検索のヘルパー関数
 export async function projectGrep(
+  projectRoot: string,
   pattern: string,
   options: DirectoryGrepOptionsInput = {},
 ): Promise<DirectoryGrepResult> {
-  const projectRoot = process.cwd();
   return directoryGrep(projectRoot, pattern, {
     recursive: true,
     exclude: [

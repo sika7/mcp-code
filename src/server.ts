@@ -40,7 +40,14 @@ import {
 } from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 import { createDirectory, removeDirectory } from "./directory.js";
-import { fileGrep, FileGrepArgs, FileGrepOptionsSchema } from "./serch.js";
+import {
+  DirectoryGrepOptionsSchema,
+  fileGrep,
+  FileGrepArgs,
+  FileGrepOptionsSchema,
+  projectGrep,
+  ProjectGrepArgs,
+} from "./serch.js";
 
 try {
   const config = loadConfig({});
@@ -257,6 +264,47 @@ try {
           safeFilePath,
           arg.pattern,
           arg.options,
+        );
+
+        const text = JSON.stringify(findResult, null, 2);
+        // 相対パスにして返す。
+        const result = convertToRelativePaths(text, currentProject.src);
+
+        return await createMpcResponse(result, {}, finalRequestId);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "projectGrep",
+    "プロジェクトから探す. Grep",
+    {
+      pattern: z
+        .string()
+        .min(1)
+        .describe("検索する文字列または正規表現パターン"),
+      options: DirectoryGrepOptionsSchema.optional().describe("検索オプション"),
+      requestId: z.string().optional().describe("リクエストID"),
+    },
+    async (arg: ProjectGrepArgs) => {
+      const finalRequestId = arg.requestId || generateRequestId();
+
+      try {
+        // プロジェクトルートのパスに丸める
+        const safeFilePath = resolveSafeProjectPath("/", currentProject.src);
+        const findResult = await projectGrep(
+          safeFilePath,
+          arg.pattern,
+          arg.options,
+        );
+
+        // 除外指定ファイルは見えないようにする
+        findResult.results = findResult.results.filter(
+          (item) => !isExcludedFiles(item.filePath),
         );
 
         const text = JSON.stringify(findResult, null, 2);
