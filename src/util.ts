@@ -1,7 +1,8 @@
-import {existsSync, mkdirSync, statSync} from 'fs'
-import {Minimatch} from 'minimatch'
-import path, {join} from 'path'
+import { existsSync, mkdirSync, statSync } from 'fs'
 import * as os from 'os'
+import path, { join } from 'path'
+
+import { Minimatch } from 'minimatch'
 
 // export function cwdPath(filePath: string[]) {
 //   return join(process.cwd(), ...filePath);
@@ -150,7 +151,7 @@ export function ensureDirectoryExists(
 
   // ディレクトリが存在しない場合は作成
   if (!existsSync(dirToCreate)) {
-    mkdirSync(dirToCreate, {recursive: true})
+    mkdirSync(dirToCreate, { recursive: true })
   }
 }
 

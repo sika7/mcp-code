@@ -2,6 +2,10 @@
  * ファイル操作モジュールのテスト
  */
 
+import { existsSync, mkdirSync } from "fs";
+import fs from "fs/promises";
+import path from "path";
+
 import {
   setupTestDirectory,
   createTestFile,
@@ -20,9 +24,6 @@ import {
   parseFileContent,
   fileMoveOrRename,
 } from "../src/files";
-import path from "path";
-import fs from "fs/promises";
-import { existsSync, mkdirSync } from "fs";
 
 async function testReadTextFile() {
   // テスト環境のセットアップ

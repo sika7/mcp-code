@@ -5,9 +5,11 @@ import {
   readdirSync,
   unlinkSync,
 } from 'fs'
-import {dirname, join} from 'path'
-import {parseISO, differenceInDays} from 'date-fns'
-import {getLogPath} from './util.js'
+import { dirname, join } from 'path'
+
+import { parseISO, differenceInDays } from 'date-fns'
+
+import { getLogPath } from './util.js'
 
 const MAX_AGE_DAYS = 30
 
@@ -36,7 +38,7 @@ type LoggerOptions = {
 
 const getLogDir = () => {
   const logDir = getLogPath(['logs'])
-  if (!existsSync(logDir)) mkdirSync(logDir, {recursive: true})
+  if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   return logDir
 }
@@ -54,12 +56,14 @@ async function writeLog(
   logPath: string,
   entry: RequestLogEntry | SystemLogEntry,
 ) {
-  appendFileSync(logPath, JSON.stringify(entry) + '\n', {encoding: 'utf-8'})
+  appendFileSync(logPath, JSON.stringify(entry) + '\n', { encoding: 'utf-8' })
 }
 
-export function createSystemLogger({logFilePath = defaultPath}: LoggerOptions) {
+export function createSystemLogger({
+  logFilePath = defaultPath,
+}: LoggerOptions) {
   const logDir = dirname(logFilePath)
-  if (!existsSync(logDir)) mkdirSync(logDir, {recursive: true})
+  if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   // ロガー関数（純粋関数 → 副作用）
   return ({
@@ -85,7 +89,7 @@ export function createRequestErrorLogger({
   logFilePath = defaultPath,
 }: LoggerOptions) {
   const logDir = dirname(logFilePath)
-  if (!existsSync(logDir)) mkdirSync(logDir, {recursive: true})
+  if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   // ロガー関数（純粋関数 → 副作用）
   return (
@@ -123,9 +127,9 @@ const deleteOldLogs = () => {
       const fullPath = join(logDir, file)
       try {
         unlinkSync(fullPath)
-        log({logLevel: 'INFO', message: `🧹 削除: ${file} (${age}日経過)`})
+        log({ logLevel: 'INFO', message: `🧹 削除: ${file} (${age}日経過)` })
       } catch (err) {
-        log({logLevel: 'ERROR', message: `⚠️ 削除失敗: ${file}`, data: err})
+        log({ logLevel: 'ERROR', message: `⚠️ 削除失敗: ${file}`, data: err })
       }
     }
   }

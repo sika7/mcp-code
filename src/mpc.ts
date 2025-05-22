@@ -1,6 +1,7 @@
-import {CallToolResult, TextContent} from '@modelcontextprotocol/sdk/types'
-import {createSystemLogger} from './logs.js'
-import {detectFileTypeWithParser} from './data-parse.js'
+import { CallToolResult, TextContent } from '@modelcontextprotocol/sdk/types'
+
+import { detectFileTypeWithParser } from './data-parse.js'
+import { createSystemLogger } from './logs.js'
 
 // 共通のエラーコード定義
 export enum MCPErrorCode {
@@ -30,7 +31,7 @@ export async function createMpcResponse(
 ): Promise<CallToolResult> {
   // Convert string to proper content format if needed
   const content: TextContent[] =
-    typeof text === 'string' ? [{type: 'text', text}] : text
+    typeof text === 'string' ? [{ type: 'text', text }] : text
 
   const finalMetadata = {
     request_id: requestId,
@@ -48,7 +49,7 @@ export async function createMpcResponse(
       }
     } catch (e) {
       const log = createSystemLogger({})
-      log({logLevel: 'ERROR', message: 'パースに失敗しました。'})
+      log({ logLevel: 'ERROR', message: 'パースに失敗しました。' })
     }
   }
 
@@ -70,7 +71,7 @@ export function createMpcErrorResponse(
 ): CallToolResult {
   // Convert string to proper content format if needed
   const content: TextContent[] =
-    typeof text === 'string' ? [{type: 'text', text}] : text
+    typeof text === 'string' ? [{ type: 'text', text }] : text
 
   const finalMetadata = {
     request_id: requestId,
@@ -82,7 +83,7 @@ export function createMpcErrorResponse(
     content,
     metadata: finalMetadata,
     isError: true,
-    ...(errorCode && {errorCode}),
+    ...(errorCode && { errorCode }),
   }
 
   return response

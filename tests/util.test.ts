@@ -2,6 +2,10 @@
  * ユーティリティモジュールのテスト
  */
 
+import { mkdirSync, existsSync, writeFileSync } from 'fs';
+import os from 'os';
+import path from 'path';
+
 import { assertEqual, runTests, isMainModule } from './test-utils';
 import {
   isExcluded,
@@ -11,9 +15,6 @@ import {
   isAllowedExtension,
   convertToRelativePaths
 } from '../src/util';
-import path from 'path';
-import os from 'os';
-import { mkdirSync, existsSync, writeFileSync } from 'fs';
 
 async function testIsExcluded() {
   // テストパスとパターン

@@ -1,8 +1,10 @@
+import { existsSync } from 'fs'
 import fs from 'fs/promises'
 import path from 'path'
-import {createSystemLogger} from './logs.js'
-import {existsSync} from 'fs'
-import {minimatch} from 'minimatch'
+
+import { minimatch } from 'minimatch'
+
+import { createSystemLogger } from './logs.js'
 
 const log = createSystemLogger({})
 
@@ -46,11 +48,11 @@ export async function writeTextFile(
   try {
     // ディレクトリが存在しない場合は作成
     const dir = path.dirname(filePath)
-    await fs.mkdir(dir, {recursive: true}).catch(() => {})
+    await fs.mkdir(dir, { recursive: true }).catch(() => {})
 
     // ファイルに書き込み
     const flag = append ? 'a' : 'w'
-    await fs.writeFile(filePath, content, {flag})
+    await fs.writeFile(filePath, content, { flag })
 
     const action = append ? 'appended to' : 'written to'
     log({
@@ -162,13 +164,13 @@ export async function fileMoveOrRename(
 
     // 移動先ディレクトリの作成（なければ）
     const destDir = path.dirname(destPath)
-    await fs.mkdir(destDir, {recursive: true})
+    await fs.mkdir(destDir, { recursive: true })
 
     // リネーム（= 移動）処理
     await fs.rename(srcPath, destPath)
 
     const msg = `移動完了: ${srcPath} → ${destPath}`
-    log({logLevel: 'INFO', message: msg})
+    log({ logLevel: 'INFO', message: msg })
     return msg
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
@@ -198,7 +200,7 @@ export async function editLines(
     // ファイルが存在するか確認
     try {
       await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.code === 'ENOENT') {
         throw new Error(`File does not exist: ${filePath}`)
       } else if (error.code === 'EACCES') {
@@ -268,14 +270,22 @@ export async function insertLine(
     // ファイルが存在するか確認
     try {
       await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`File does not exist: ${filePath}`)
-      } else if (error.code === 'EACCES') {
-        throw new Error(`Permission denied: ${filePath}`)
-      } else {
-        throw error
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'ENOENT'
+        ) {
+          throw new Error(`File does not exist: ${filePath}`)
+        }
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'EACCES'
+        ) {
+          throw new Error(`Permission denied: ${filePath}`)
+        }
       }
+      throw error
     }
 
     // ファイルの内容を読み込む
@@ -328,14 +338,22 @@ export async function deleteLines(
     // ファイルが存在するか確認
     try {
       await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: any) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`File does not exist: ${filePath}`)
-      } else if (error.code === 'EACCES') {
-        throw new Error(`Permission denied: ${filePath}`)
-      } else {
-        throw error
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'ENOENT'
+        ) {
+          throw new Error(`File does not exist: ${filePath}`)
+        }
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'EACCES'
+        ) {
+          throw new Error(`Permission denied: ${filePath}`)
+        }
       }
+      throw error
     }
 
     // ファイルの内容を読み込む

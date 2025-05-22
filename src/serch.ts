@@ -1,8 +1,10 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as readline from 'readline'
-import {createSystemLogger} from './logs.js'
-import {z} from 'zod'
+
+import { z } from 'zod'
+
+import { createSystemLogger } from './logs.js'
 
 // 型定義
 interface GrepOptions {
@@ -217,7 +219,7 @@ export async function* walkDirectory(
   options: NormalizedDirectoryGrepOptions,
 ): AsyncIterable<string> {
   try {
-    const entries = await fs.promises.readdir(dirPath, {withFileTypes: true})
+    const entries = await fs.promises.readdir(dirPath, { withFileTypes: true })
 
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry.name)
@@ -292,7 +294,7 @@ export function extractContext(
   contextSize: number,
 ): ContextResult {
   if (contextSize === 0) {
-    return {beforeContext: [], afterContext: []}
+    return { beforeContext: [], afterContext: [] }
   }
 
   const startIndex = Math.max(0, targetIndex - contextSize)
@@ -308,7 +310,7 @@ export function extractContext(
     .map(l => l.trim())
     .filter(l => l.length > 0)
 
-  return {beforeContext, afterContext}
+  return { beforeContext, afterContext }
 }
 
 // 結果整形の純粋関数
@@ -373,8 +375,8 @@ export function readFileSync(filePath: string): FileContent {
 
 export async function* readFileStream(
   filePath: string,
-): AsyncIterable<{line: string; lineNumber: number}> {
-  const fileStream = fs.createReadStream(filePath, {encoding: 'utf8'})
+): AsyncIterable<{ line: string; lineNumber: number }> {
+  const fileStream = fs.createReadStream(filePath, { encoding: 'utf8' })
   const rl = readline.createInterface({
     input: fileStream,
     crlfDelay: Infinity,
@@ -385,7 +387,7 @@ export async function* readFileStream(
   try {
     for await (const line of rl) {
       lineNumber++
-      yield {line, lineNumber}
+      yield { line, lineNumber }
     }
   } finally {
     rl.close()
@@ -398,7 +400,7 @@ export function processLinesSync(
   lines: string[],
   pattern: string,
   options: NormalizedGrepOptions,
-): {matches: GrepMatch[]; truncated: boolean} {
+): { matches: GrepMatch[]; truncated: boolean } {
   const matcher = createMatcher(pattern, options)
   const results: GrepMatch[] = []
   let truncated = false
@@ -433,7 +435,7 @@ export function processLinesSync(
     }
   }
 
-  return {matches: results, truncated}
+  return { matches: results, truncated }
 }
 
 export async function processLinesStream(
@@ -454,7 +456,7 @@ export async function processLinesStream(
   let truncated = false
 
   try {
-    for await (const {line, lineNumber} of readFileStream(filePath)) {
+    for await (const { line, lineNumber } of readFileStream(filePath)) {
       totalLinesProcessed++
 
       // コンテキスト用のバッファ管理
@@ -501,7 +503,7 @@ export async function processLinesStream(
     throw new Error(`Stream processing error: ${(error as Error).message}`)
   }
 
-  return {matches: results, truncated, totalLinesProcessed}
+  return { matches: results, truncated, totalLinesProcessed }
 }
 
 // 単一ファイル検索関数
@@ -522,7 +524,7 @@ export async function fileGrep(
         message: `Large file detected (${Math.round(stats.size / 1024 / 1024)}MB), using stream processing`,
       })
 
-      const {matches, truncated, totalLinesProcessed} =
+      const { matches, truncated, totalLinesProcessed } =
         await processLinesStream(filePath, pattern, {
           ...normalizedOptions,
           maxResults: normalizedOptions.maxResults || 1000,
@@ -538,7 +540,7 @@ export async function fileGrep(
       }
     } else {
       const fileContent = readFileSync(filePath)
-      const {matches, truncated} = processLinesSync(
+      const { matches, truncated } = processLinesSync(
         fileContent.lines,
         pattern,
         normalizedOptions,

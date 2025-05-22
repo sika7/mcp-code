@@ -5,11 +5,11 @@
  */
 
 import { runConfigTests } from './config.test.js';
-import { runFilesTests } from './files.test.js';
-import { runUtilTests } from './util.test.js';
-import { runScriptTests } from './script.test.js';
 import { runDirectoryTests } from './directory.test.js';
+import { runFilesTests } from './files.test.js';
+import { runScriptTests } from './script.test.js';
 import { isMainModule } from './test-utils.js';
+import { runUtilTests } from './util.test.js';
 
 // テストのグループ化
 type TestGroup = {

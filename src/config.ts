@@ -1,12 +1,14 @@
-import {readFileSync, existsSync} from 'fs'
-import {parse} from 'yaml'
-import {configSchema, Config} from './schema.js'
-import {createSystemLogger} from './logs.js'
-import {getConfigPath} from './util.js'
+import { readFileSync, existsSync } from 'fs'
+
+import { parse } from 'yaml'
+
+import { createSystemLogger } from './logs.js'
+import { configSchema, Config } from './schema.js'
+import { getConfigPath } from './util.js'
 
 const CONFIG_PATH = getConfigPath()
 
-export function loadConfig({configPath = CONFIG_PATH}): Config {
+export function loadConfig({ configPath = CONFIG_PATH }): Config {
   if (!existsSync(configPath)) {
     throw new Error(`設定ファイルが見つかりません: ${configPath}`)
   }

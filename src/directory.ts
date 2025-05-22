@@ -1,5 +1,6 @@
-import {promises as fs, rmSync} from 'fs'
-import {createSystemLogger} from './logs.js'
+import { promises as fs, rmSync } from 'fs'
+
+import { createSystemLogger } from './logs.js'
 
 const log = createSystemLogger({})
 
@@ -9,7 +10,7 @@ const log = createSystemLogger({})
  */
 export async function createDirectory(dirPath: string) {
   try {
-    await fs.mkdir(dirPath, {recursive: true})
+    await fs.mkdir(dirPath, { recursive: true })
     log({
       logLevel: 'INFO',
       message: `ディレクトリを作成しました: ${dirPath}`,
@@ -31,7 +32,7 @@ export async function createDirectory(dirPath: string) {
  */
 export async function removeDirectory(dirPath: string) {
   try {
-    await fs.rm(dirPath, {recursive: true, force: true})
+    await fs.rm(dirPath, { recursive: true, force: true })
     log({
       logLevel: 'INFO',
       message: `ディレクトリを削除しました: ${dirPath}`,
@@ -53,7 +54,7 @@ export async function removeDirectory(dirPath: string) {
  */
 export function removeDirectorySync(dirPath: string): void {
   try {
-    rmSync(dirPath, {recursive: true, force: true})
+    rmSync(dirPath, { recursive: true, force: true })
     log({
       logLevel: 'INFO',
       message: `ディレクトリを削除しました: ${dirPath}`,

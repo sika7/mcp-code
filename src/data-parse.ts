@@ -1,5 +1,5 @@
+import { XMLParser } from 'fast-xml-parser'
 import yaml from 'js-yaml'
-import {XMLParser} from 'fast-xml-parser'
 import Papa from 'papaparse'
 import toml from 'toml'
 
@@ -12,7 +12,7 @@ import toml from 'toml'
 export async function detectFileTypeWithParser(
   fileContent: string,
   fileName?: string,
-): Promise<{mimeType: string; parsedData: any}> {
+): Promise<{ mimeType: string; parsedData: any }> {
   if (!fileContent || fileContent.trim() === '') {
     throw new Error('ファイルの内容がありません')
   }
@@ -29,31 +29,31 @@ export async function detectFileTypeWithParser(
       switch (format) {
         case 'json':
           const jsonData = JSON.parse(fileContent)
-          return {mimeType: 'application/json', parsedData: jsonData}
+          return { mimeType: 'application/json', parsedData: jsonData }
 
         case 'yaml':
           const yamlData = yaml.load(fileContent)
-          return {mimeType: 'application/yaml', parsedData: yamlData}
+          return { mimeType: 'application/yaml', parsedData: yamlData }
 
         case 'xml':
           const parser = new XMLParser()
-          let xmlData = parser.parse(fileContent)
-          return {mimeType: 'application/xml', parsedData: xmlData}
+          const xmlData = parser.parse(fileContent)
+          return { mimeType: 'application/xml', parsedData: xmlData }
 
         case 'csv':
           // CSVパーサーが必要
-          const csvData = Papa.parse(fileContent, {header: true})
+          const csvData = Papa.parse(fileContent, { header: true })
           if (
             csvData.errors.length === 0 ||
             csvData.errors[0].code === 'TooFewFields'
           ) {
-            return {mimeType: 'text/csv', parsedData: csvData.data}
+            return { mimeType: 'text/csv', parsedData: csvData.data }
           }
           break
 
         case 'toml':
           const tomlData = toml.parse(fileContent)
-          return {mimeType: 'application/toml', parsedData: tomlData}
+          return { mimeType: 'application/toml', parsedData: tomlData }
       }
     } catch (e) {
       // このフォーマットでのパースに失敗、次を試す
@@ -62,7 +62,7 @@ export async function detectFileTypeWithParser(
   }
 
   // すべてのパーサーが失敗した場合はプレーンテキストとして扱う
-  return {mimeType: 'text/plain', parsedData: fileContent}
+  return { mimeType: 'text/plain', parsedData: fileContent }
 }
 
 /**

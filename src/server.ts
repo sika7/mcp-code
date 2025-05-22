@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
-import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
-import {z} from 'zod'
-import {loadConfig} from './config.js'
-import {createRequestErrorLogger, createSystemLogger} from './logs.js'
-import {runScript} from './script.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { z } from 'zod'
+
+import { loadConfig } from './config.js'
+import { createDirectory, removeDirectory } from './directory.js'
 import {
   deleteFile,
   deleteLines,
@@ -32,14 +32,9 @@ import {
   readTextFile,
   writeTextFile,
 } from './files.js'
-import {
-  convertToRelativePaths,
-  generateRequestId,
-  isExcluded,
-  resolveSafeProjectPath,
-} from './util.js'
-import {createMpcErrorResponse, createMpcResponse} from './mpc.js'
-import {createDirectory, removeDirectory} from './directory.js'
+import { createRequestErrorLogger, createSystemLogger } from './logs.js'
+import { createMpcErrorResponse, createMpcResponse } from './mpc.js'
+import { runScript } from './script.js'
 import {
   DirectoryGrepOptionsSchema,
   fileGrep,
@@ -48,10 +43,16 @@ import {
   projectGrep,
   ProjectGrepArgs,
 } from './serch.js'
+import {
+  convertToRelativePaths,
+  generateRequestId,
+  isExcluded,
+  resolveSafeProjectPath,
+} from './util.js'
 
 try {
   const config = loadConfig({})
-  const requestLog = createRequestErrorLogger({logFilePath: config.log_path})
+  const requestLog = createRequestErrorLogger({ logFilePath: config.log_path })
 
   const currentProjectName = config.current_project
   const currentProject = config.projects[currentProjectName]
@@ -94,7 +95,7 @@ try {
       exclude: z.string().default('').describe('glob風のパターン'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({path, exclude, requestId}) => {
+    async ({ path, exclude, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -110,7 +111,7 @@ try {
       try {
         const mergeExcluded = [...allExcludedFiles, ...exclude.split(',')]
         const log = createSystemLogger({})
-        log({logLevel: 'INFO', message: '除外パターン', data: mergeExcluded})
+        log({ logLevel: 'INFO', message: '除外パターン', data: mergeExcluded })
         const tree = await generateDirectoryTree(safeFilePath, {
           exclude: mergeExcluded,
         })
@@ -132,7 +133,7 @@ try {
       filePath: z.string().min(1).describe('作成したいディレクトリパスを指定'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, requestId}) => {
+    async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -163,7 +164,7 @@ try {
       filePath: z.string().min(1).describe('削除したいディレクトリパスを指定'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, requestId}) => {
+    async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -199,7 +200,7 @@ try {
       filter: z.string().optional().describe('regex'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({path, filter, requestId}) => {
+    async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -327,7 +328,7 @@ try {
       filePath: z.string().min(1).describe('読み込みたいファイルのパスを指定'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, requestId}) => {
+    async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -369,7 +370,7 @@ try {
       content: z.string().describe('ファイルの内容'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, content, requestId}) => {
+    async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -402,7 +403,7 @@ try {
       filePath: z.string().min(1).describe('削除したいファイルのパスを指定'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, requestId}) => {
+    async ({ filePath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
       const finalRequestId = requestId || generateRequestId()
 
@@ -435,7 +436,7 @@ try {
       distPath: z.string().min(1).describe('コピー先のパスを指定'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({srcPath, distPath, requestId}) => {
+    async ({ srcPath, distPath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
       const finalRequestId = requestId || generateRequestId()
 
@@ -474,7 +475,7 @@ try {
       content: z.string().describe('追記する内容'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, lineNumber, content, requestId}) => {
+    async ({ filePath, lineNumber, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -520,7 +521,7 @@ try {
         ),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, startLine, endLine, content, requestId}) => {
+    async ({ filePath, startLine, endLine, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -566,7 +567,7 @@ try {
         .describe('削除したい行番号(1ベース)'),
       requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({filePath, startLine, endLine, requestId}) => {
+    async ({ filePath, startLine, endLine, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -598,7 +599,7 @@ try {
       {
         requestId: z.string().optional().describe('リクエストID'),
       },
-      async ({requestId}) => {
+      async ({ requestId }) => {
         // リクエストIDがない場合はランダムなIDを生成
         const finalRequestId = requestId || generateRequestId()
 

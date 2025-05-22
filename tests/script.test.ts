@@ -2,6 +2,10 @@
  * スクリプト実行モジュールのテスト
  */
 
+import { existsSync, writeFileSync, mkdirSync } from "fs";
+import fs from "fs/promises";
+import path from "path";
+
 import {
   setupTestDirectory,
   assertEqual,
@@ -9,9 +13,6 @@ import {
   isMainModule,
 } from "./test-utils";
 import { runScript } from "../src/script";
-import path from "path";
-import fs from "fs/promises";
-import { existsSync, writeFileSync, mkdirSync } from "fs";
 
 async function testRunScript() {
   // テスト環境のセットアップ
