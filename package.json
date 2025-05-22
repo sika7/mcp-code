@@ -11,7 +11,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "npx @modelcontextprotocol/inspector npx tsx src/server.ts",
-    "fmt": "prettier --write 'src/**/*.ts'",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "fmt": "prettier --write 'src/**/*.ts' && npm run lint:fix",
     "test": "npx tsx tests/index.ts",
     "test:config": "npx tsx tests/config.test.ts",
     "test:files": "npx tsx tests/files.test.ts",
@@ -35,9 +37,13 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.19",
     "@types/papaparse": "^5.3.16",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
     "jest-mock": "^29.7.0",
     "prettier": "^3.5.3",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
   }
 }
