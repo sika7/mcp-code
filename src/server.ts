@@ -40,6 +40,11 @@ import {
 } from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 import { createDirectory, removeDirectory } from "./directory.js";
+import {
+  fileGrep,
+  FileGrepArgs,
+  FileGrepOptionsSchema,
+} from "./serch.js";
 
 try {
   const config = loadConfig({});
@@ -206,6 +211,54 @@ try {
           items.join("\n"),
           currentProject.src,
         );
+        return await createMpcResponse(result, {}, finalRequestId);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
+        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+      }
+    },
+  );
+
+  server.tool(
+    "findInFile",
+    "ファイルから探す. Grep",
+    {
+      filePath: z.string().min(1).describe("検索対象のファイルパス"),
+      pattern: z
+        .string()
+        .min(1)
+        .describe("検索する文字列または正規表現パターン"),
+      options: FileGrepOptionsSchema.optional().describe("検索オプション"),
+      requestId: z.string().optional().describe("リクエストID"),
+    },
+    async (arg: FileGrepArgs) => {
+      const finalRequestId = arg.requestId || generateRequestId();
+
+      // プロジェクトルートのパスに丸める
+      const safeFilePath = resolveSafeProjectPath(
+        arg.filePath,
+        currentProject.src,
+      );
+
+      if (isExcludedFiles(safeFilePath)) {
+        return createMpcErrorResponse(
+          "指定されたファイルはツールにより制限されています",
+          "PERMISSION_DENIED",
+        );
+      }
+
+      try {
+        const findResult = await fileGrep(
+          safeFilePath,
+          arg.pattern,
+          arg.options,
+        );
+
+        const text = JSON.stringify(findResult, null, 2);
+        // 相対パスにして返す。
+        const result = convertToRelativePaths(text, currentProject.src);
+
         return await createMpcResponse(result, {}, finalRequestId);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
