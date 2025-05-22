@@ -40,11 +40,7 @@ import {
 } from "./util.js";
 import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
 import { createDirectory, removeDirectory } from "./directory.js";
-import {
-  fileGrep,
-  FileGrepArgs,
-  FileGrepOptionsSchema,
-} from "./serch.js";
+import { fileGrep, FileGrepArgs, FileGrepOptionsSchema } from "./serch.js";
 
 try {
   const config = loadConfig({});
@@ -81,11 +77,15 @@ try {
 
   server.tool(
     "directoryTree",
-    "プロジェクトのファイルをツリー表示する. exclude: glob風のパターン",
+    "プロジェクトのファイルをツリー表示する.",
     {
-      path: z.string(),
-      exclude: z.string(),
-      requestId: z.string().optional(),
+      path: z
+        .string()
+        .min(1)
+        .default("/")
+        .describe("表示したいディレクトリパスを指定"),
+      exclude: z.string().default("").describe("glob風のパターン"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ path, exclude, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -122,8 +122,8 @@ try {
     "createDirectory",
     "ディレクトリを作成する.",
     {
-      filePath: z.string(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("作成したいディレクトリパスを指定"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -153,8 +153,8 @@ try {
     "removeDirectory",
     "ディレクトリを削除する.",
     {
-      filePath: z.string(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("削除したいディレクトリパスを指定"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -182,11 +182,15 @@ try {
 
   server.tool(
     "fileList",
-    "指定ディレクトリのファイル一覧を取得する. filter: regex",
+    "指定ディレクトリのファイル一覧を取得する.",
     {
-      path: z.string(),
-      filter: z.string().optional(),
-      requestId: z.string().optional(),
+      path: z
+        .string()
+        .min(1)
+        .default("/")
+        .describe("表示したいディレクトリパスを指定"),
+      filter: z.string().optional().describe("regex"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -224,7 +228,7 @@ try {
     "findInFile",
     "ファイルから探す. Grep",
     {
-      filePath: z.string().min(1).describe("検索対象のファイルパス"),
+      filePath: z.string().min(1).describe("検索対象のファイルパスを指定"),
       pattern: z
         .string()
         .min(1)
@@ -271,7 +275,10 @@ try {
   server.tool(
     "fileReed",
     "指定ファイルの内容を返す.",
-    { filePath: z.string(), requestId: z.string().optional() },
+    {
+      filePath: z.string().min(1).describe("読み込みたいファイルのパスを指定"),
+      requestId: z.string().optional().describe("リクエストID"),
+    },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
 
@@ -307,9 +314,12 @@ try {
     "fileWrite",
     "指定ファイルに書き込む.",
     {
-      filePath: z.string(),
-      content: z.string(),
-      requestId: z.string().optional(),
+      filePath: z
+        .string()
+        .min(1)
+        .describe("書き込みしたいファイルのパスを指定"),
+      content: z.string().describe("ファイルの内容"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -341,8 +351,8 @@ try {
     "fileDelete",
     "指定ファイルを削除.",
     {
-      filePath: z.string(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("削除したいファイルのパスを指定"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
@@ -373,9 +383,9 @@ try {
     "fileMoveOrRename",
     "指定ファイルをコピー.",
     {
-      srcPath: z.string(),
-      distPath: z.string(),
-      requestId: z.string().optional(),
+      srcPath: z.string().min(1).describe("コピーしたいファイルのパスを指定"),
+      distPath: z.string().min(1).describe("コピー先のパスを指定"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ srcPath, distPath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
@@ -407,10 +417,14 @@ try {
     "fileInsertLine",
     "指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
-      filePath: z.string(),
-      lineNumber: z.number(),
-      content: z.string(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      lineNumber: z
+        .number()
+        .min(1)
+        .default(1)
+        .describe("編集したい行番号(1ベース)"),
+      content: z.string().describe("追記する内容"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, lineNumber, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -440,11 +454,23 @@ try {
     "fileEditLines",
     "指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
-      filePath: z.string(),
-      startLine: z.number(),
-      endLine: z.number(),
-      content: z.string(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      startLine: z
+        .number()
+        .min(1)
+        .default(1)
+        .describe("編集したい行番号(1ベース)"),
+      endLine: z
+        .number()
+        .min(1)
+        .default(1)
+        .describe("編集したい行番号(1ベース)"),
+      content: z
+        .string()
+        .describe(
+          "編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
+        ),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, startLine, endLine, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -479,10 +505,18 @@ try {
     "fileDeleteLines",
     "指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
     {
-      filePath: z.string(),
-      startLine: z.number(),
-      endLine: z.number(),
-      requestId: z.string().optional(),
+      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      startLine: z
+        .number()
+        .min(1)
+        .default(1)
+        .describe("削除したい行番号(1ベース)"),
+      endLine: z
+        .number()
+        .min(1)
+        .default(1)
+        .describe("削除したい行番号(1ベース)"),
+      requestId: z.string().optional().describe("リクエストID"),
     },
     async ({ filePath, startLine, endLine, requestId }) => {
       const finalRequestId = requestId || generateRequestId();
@@ -514,7 +548,7 @@ try {
       `script_${name}`,
       `ユーザー指定のスクリプト. ${scriptCmd}`,
       {
-        requestId: z.string().optional(),
+        requestId: z.string().optional().describe("リクエストID"),
       },
       async ({ requestId }) => {
         // リクエストIDがない場合はランダムなIDを生成
