@@ -1,0 +1,27 @@
+# .editorconfig — top-most EditorConfig file
+root = true
+
+# 全ファイル共通設定
+[*]
+charset = utf-8                   # 文字エンコーディング
+indent_style = space              # インデントはスペース
+indent_size = 2                   # スペース2つ分のインデント
+tab_width = 2                     # タブ幅（表示用）
+end_of_line = lf                  # 改行コードはLF
+insert_final_newline = true       # ファイル末尾に改行を挿入
+trim_trailing_whitespace = true   # 行末の不要な空白は削除
+
+# Markdown やテキスト系は末尾空白を残す
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+# JavaScript / JSON / YAML はスペース2つ
+[*.{js,jsx,json,yml,yaml}]
+indent_size = 2
+
+# シェルスクリプトはLF & 末尾改行
+[*.sh]
+end_of_line = lf
+insert_final_newline = true
