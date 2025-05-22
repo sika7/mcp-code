@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { loadConfig } from "./config.js";
-import { createRequestErrorLogger, createSystemLogger } from "./logs.js";
-import { runScript } from "./script.js";
+import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
+import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
+import {z} from 'zod'
+import {loadConfig} from './config.js'
+import {createRequestErrorLogger, createSystemLogger} from './logs.js'
+import {runScript} from './script.js'
 import {
   deleteFile,
   deleteLines,
@@ -31,15 +31,15 @@ import {
   parseFileContent,
   readTextFile,
   writeTextFile,
-} from "./files.js";
+} from './files.js'
 import {
   convertToRelativePaths,
   generateRequestId,
   isExcluded,
   resolveSafeProjectPath,
-} from "./util.js";
-import { createMpcErrorResponse, createMpcResponse } from "./mpc.js";
-import { createDirectory, removeDirectory } from "./directory.js";
+} from './util.js'
+import {createMpcErrorResponse, createMpcResponse} from './mpc.js'
+import {createDirectory, removeDirectory} from './directory.js'
 import {
   DirectoryGrepOptionsSchema,
   fileGrep,
@@ -47,216 +47,216 @@ import {
   FileGrepOptionsSchema,
   projectGrep,
   ProjectGrepArgs,
-} from "./serch.js";
+} from './serch.js'
 
 try {
-  const config = loadConfig({});
-  const requestLog = createRequestErrorLogger({ logFilePath: config.log_path });
+  const config = loadConfig({})
+  const requestLog = createRequestErrorLogger({logFilePath: config.log_path})
 
-  const currentProjectName = config.current_project;
-  const currentProject = config.projects[currentProjectName];
+  const currentProjectName = config.current_project
+  const currentProject = config.projects[currentProjectName]
 
   // MCP サーバーのインスタンスを作成
   const server = new McpServer({
-    name: "mcp-code",
-    version: "1.0.0",
-  });
+    name: 'mcp-code',
+    version: '1.0.0',
+  })
 
-  const globalExcludedFiles = config.excluded_files;
+  const globalExcludedFiles = config.excluded_files
 
-  let allExcludedFiles: string[] = [];
+  let allExcludedFiles: string[] = []
   if (globalExcludedFiles) {
     // globalなexcluded_filesが設定されてればマージ
-    allExcludedFiles = [...globalExcludedFiles];
+    allExcludedFiles = [...globalExcludedFiles]
   }
 
   if (currentProject.excluded_files) {
     // excluded_filesが設定されてればマージ
-    allExcludedFiles = [...allExcludedFiles, ...currentProject.excluded_files];
+    allExcludedFiles = [...allExcludedFiles, ...currentProject.excluded_files]
   }
 
   const isExcludedFiles = (filePath: string) => {
     // 除外ファイルをチェック
-    if (isExcluded(filePath, allExcludedFiles)) return true;
+    if (isExcluded(filePath, allExcludedFiles)) return true
 
-    return false;
-  };
+    return false
+  }
 
   server.tool(
-    "directoryTree",
-    "プロジェクトのファイルをツリー表示する.",
+    'directoryTree',
+    'プロジェクトのファイルをツリー表示する.',
     {
       path: z
         .string()
         .min(1)
-        .default("/")
-        .describe("表示したいディレクトリパスを指定"),
-      exclude: z.string().default("").describe("glob風のパターン"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .default('/')
+        .describe('表示したいディレクトリパスを指定'),
+      exclude: z.string().default('').describe('glob風のパターン'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ path, exclude, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({path, exclude, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(path, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(path, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたパスはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたパスはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const mergeExcluded = [...allExcludedFiles, ...exclude.split(",")];
-        const log = createSystemLogger({});
-        log({ logLevel: "INFO", message: "除外パターン", data: mergeExcluded });
+        const mergeExcluded = [...allExcludedFiles, ...exclude.split(',')]
+        const log = createSystemLogger({})
+        log({logLevel: 'INFO', message: '除外パターン', data: mergeExcluded})
         const tree = await generateDirectoryTree(safeFilePath, {
           exclude: mergeExcluded,
-        });
+        })
         // 相対パスにして返す。
-        const result = convertToRelativePaths(tree, currentProject.src);
-        return await createMpcResponse(result, {}, finalRequestId);
+        const result = convertToRelativePaths(tree, currentProject.src)
+        return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "createDirectory",
-    "ディレクトリを作成する.",
+    'createDirectory',
+    'ディレクトリを作成する.',
     {
-      filePath: z.string().min(1).describe("作成したいディレクトリパスを指定"),
-      requestId: z.string().optional().describe("リクエストID"),
+      filePath: z.string().min(1).describe('作成したいディレクトリパスを指定'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const result = await createDirectory(safeFilePath);
-        return await createMpcResponse(result);
+        const result = await createDirectory(safeFilePath)
+        return await createMpcResponse(result)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "removeDirectory",
-    "ディレクトリを削除する.",
+    'removeDirectory',
+    'ディレクトリを削除する.',
     {
-      filePath: z.string().min(1).describe("削除したいディレクトリパスを指定"),
-      requestId: z.string().optional().describe("リクエストID"),
+      filePath: z.string().min(1).describe('削除したいディレクトリパスを指定'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const result = await removeDirectory(safeFilePath);
-        return await createMpcResponse(result);
+        const result = await removeDirectory(safeFilePath)
+        return await createMpcResponse(result)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileList",
-    "指定ディレクトリのファイル一覧を取得する.",
+    'fileList',
+    '指定ディレクトリのファイル一覧を取得する.',
     {
       path: z
         .string()
         .min(1)
-        .default("/")
-        .describe("表示したいディレクトリパスを指定"),
-      filter: z.string().optional().describe("regex"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .default('/')
+        .describe('表示したいディレクトリパスを指定'),
+      filter: z.string().optional().describe('regex'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ path, filter, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({path, filter, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(path, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(path, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const files = await listFiles(safeFilePath, filter);
+        const files = await listFiles(safeFilePath, filter)
         // 許可されたファイルのみ表示
-        const items = files.filter((item) => !isExcludedFiles(item));
+        const items = files.filter(item => !isExcludedFiles(item))
 
         // 相対パスにして返す。
         const result = convertToRelativePaths(
-          items.join("\n"),
+          items.join('\n'),
           currentProject.src,
-        );
-        return await createMpcResponse(result, {}, finalRequestId);
+        )
+        return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "findInFile",
-    "ファイルから探す. Grep",
+    'findInFile',
+    'ファイルから探す. Grep',
     {
-      filePath: z.string().min(1).describe("検索対象のファイルパスを指定"),
+      filePath: z.string().min(1).describe('検索対象のファイルパスを指定'),
       pattern: z
         .string()
         .min(1)
-        .describe("検索する文字列または正規表現パターン"),
-      options: FileGrepOptionsSchema.optional().describe("検索オプション"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .describe('検索する文字列または正規表現パターン'),
+      options: FileGrepOptionsSchema.optional().describe('検索オプション'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
     async (arg: FileGrepArgs) => {
-      const finalRequestId = arg.requestId || generateRequestId();
+      const finalRequestId = arg.requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
       const safeFilePath = resolveSafeProjectPath(
         arg.filePath,
         currentProject.src,
-      );
+      )
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
@@ -264,85 +264,85 @@ try {
           safeFilePath,
           arg.pattern,
           arg.options,
-        );
+        )
 
-        const text = JSON.stringify(findResult, null, 2);
+        const text = JSON.stringify(findResult, null, 2)
         // 相対パスにして返す。
-        const result = convertToRelativePaths(text, currentProject.src);
+        const result = convertToRelativePaths(text, currentProject.src)
 
-        return await createMpcResponse(result, {}, finalRequestId);
+        return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "projectGrep",
-    "プロジェクトから探す. Grep",
+    'projectGrep',
+    'プロジェクトから探す. Grep',
     {
       pattern: z
         .string()
         .min(1)
-        .describe("検索する文字列または正規表現パターン"),
-      options: DirectoryGrepOptionsSchema.optional().describe("検索オプション"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .describe('検索する文字列または正規表現パターン'),
+      options: DirectoryGrepOptionsSchema.optional().describe('検索オプション'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
     async (arg: ProjectGrepArgs) => {
-      const finalRequestId = arg.requestId || generateRequestId();
+      const finalRequestId = arg.requestId || generateRequestId()
 
       try {
         // プロジェクトルートのパスに丸める
-        const safeFilePath = resolveSafeProjectPath("/", currentProject.src);
+        const safeFilePath = resolveSafeProjectPath('/', currentProject.src)
         const findResult = await projectGrep(
           safeFilePath,
           arg.pattern,
           arg.options,
-        );
+        )
 
         // 除外指定ファイルは見えないようにする
         findResult.results = findResult.results.filter(
-          (item) => !isExcludedFiles(item.filePath),
-        );
+          item => !isExcludedFiles(item.filePath),
+        )
 
-        const text = JSON.stringify(findResult, null, 2);
+        const text = JSON.stringify(findResult, null, 2)
         // 相対パスにして返す。
-        const result = convertToRelativePaths(text, currentProject.src);
+        const result = convertToRelativePaths(text, currentProject.src)
 
-        return await createMpcResponse(result, {}, finalRequestId);
+        return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileReed",
-    "指定ファイルの内容を返す.",
+    'fileReed',
+    '指定ファイルの内容を返す.',
     {
-      filePath: z.string().min(1).describe("読み込みたいファイルのパスを指定"),
-      requestId: z.string().optional().describe("リクエストID"),
+      filePath: z.string().min(1).describe('読み込みたいファイルのパスを指定'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const content = await readTextFile(safeFilePath);
-        const lines = parseFileContent(content);
+        const content = await readTextFile(safeFilePath)
+        const lines = parseFileContent(content)
 
         return await createMpcResponse(
           content,
@@ -350,187 +350,187 @@ try {
             lines: lines,
           },
           finalRequestId,
-        );
+        )
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileWrite",
-    "指定ファイルに書き込む.",
+    'fileWrite',
+    '指定ファイルに書き込む.',
     {
       filePath: z
         .string()
         .min(1)
-        .describe("書き込みしたいファイルのパスを指定"),
-      content: z.string().describe("ファイルの内容"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .describe('書き込みしたいファイルのパスを指定'),
+      content: z.string().describe('ファイルの内容'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, content, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, content, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const message = await writeTextFile(safeFilePath, content);
+        const message = await writeTextFile(safeFilePath, content)
         // 相対パスにして返す。
-        const result = convertToRelativePaths(message, currentProject.src);
-        return await createMpcResponse(result);
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileDelete",
-    "指定ファイルを削除.",
+    'fileDelete',
+    '指定ファイルを削除.',
     {
-      filePath: z.string().min(1).describe("削除したいファイルのパスを指定"),
-      requestId: z.string().optional().describe("リクエストID"),
+      filePath: z.string().min(1).describe('削除したいファイルのパスを指定'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, requestId }) => {
+    async ({filePath, requestId}) => {
       // リクエストIDがない場合はランダムなIDを生成
-      const finalRequestId = requestId || generateRequestId();
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const message = await deleteFile(safeFilePath);
-        return await createMpcResponse(message);
+        const message = await deleteFile(safeFilePath)
+        return await createMpcResponse(message)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileMoveOrRename",
-    "指定ファイルをコピー.",
+    'fileMoveOrRename',
+    '指定ファイルをコピー.',
     {
-      srcPath: z.string().min(1).describe("コピーしたいファイルのパスを指定"),
-      distPath: z.string().min(1).describe("コピー先のパスを指定"),
-      requestId: z.string().optional().describe("リクエストID"),
+      srcPath: z.string().min(1).describe('コピーしたいファイルのパスを指定'),
+      distPath: z.string().min(1).describe('コピー先のパスを指定'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ srcPath, distPath, requestId }) => {
+    async ({srcPath, distPath, requestId}) => {
       // リクエストIDがない場合はランダムなIDを生成
-      const finalRequestId = requestId || generateRequestId();
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeSrcPath = resolveSafeProjectPath(srcPath, currentProject.src);
-      const safeDistPath = resolveSafeProjectPath(distPath, currentProject.src);
+      const safeSrcPath = resolveSafeProjectPath(srcPath, currentProject.src)
+      const safeDistPath = resolveSafeProjectPath(distPath, currentProject.src)
 
       if (isExcludedFiles(safeSrcPath) || isExcludedFiles(safeDistPath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const message = await fileMoveOrRename(safeSrcPath, safeDistPath);
-        return await createMpcResponse(message);
+        const message = await fileMoveOrRename(safeSrcPath, safeDistPath)
+        return await createMpcResponse(message)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileInsertLine",
-    "指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
+    'fileInsertLine',
+    '指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
-      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       lineNumber: z
         .number()
         .min(1)
         .default(1)
-        .describe("編集したい行番号(1ベース)"),
-      content: z.string().describe("追記する内容"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .describe('編集したい行番号(1ベース)'),
+      content: z.string().describe('追記する内容'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, lineNumber, content, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, lineNumber, content, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const message = await insertLine(safeFilePath, lineNumber, content);
-        return await createMpcResponse(message);
+        const message = await insertLine(safeFilePath, lineNumber, content)
+        return await createMpcResponse(message)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileEditLines",
-    "指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
+    'fileEditLines',
+    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
-      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       startLine: z
         .number()
         .min(1)
         .default(1)
-        .describe("編集したい行番号(1ベース)"),
+        .describe('編集したい行番号(1ベース)'),
       endLine: z
         .number()
         .min(1)
         .default(1)
-        .describe("編集したい行番号(1ベース)"),
+        .describe('編集したい行番号(1ベース)'),
       content: z
         .string()
         .describe(
-          "編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
+          '編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
         ),
-      requestId: z.string().optional().describe("リクエストID"),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, startLine, endLine, content, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, startLine, endLine, content, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
@@ -539,101 +539,101 @@ try {
           startLine,
           endLine,
           content,
-        );
-        return await createMpcResponse(message);
+        )
+        return await createMpcResponse(message)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
   server.tool(
-    "fileDeleteLines",
-    "指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる",
+    'fileDeleteLines',
+    '指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
-      filePath: z.string().min(1).describe("編集したいファイルのパスを指定"),
+      filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       startLine: z
         .number()
         .min(1)
         .default(1)
-        .describe("削除したい行番号(1ベース)"),
+        .describe('削除したい行番号(1ベース)'),
       endLine: z
         .number()
         .min(1)
         .default(1)
-        .describe("削除したい行番号(1ベース)"),
-      requestId: z.string().optional().describe("リクエストID"),
+        .describe('削除したい行番号(1ベース)'),
+      requestId: z.string().optional().describe('リクエストID'),
     },
-    async ({ filePath, startLine, endLine, requestId }) => {
-      const finalRequestId = requestId || generateRequestId();
+    async ({filePath, startLine, endLine, requestId}) => {
+      const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src);
+      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
 
       if (isExcludedFiles(safeFilePath)) {
         return createMpcErrorResponse(
-          "指定されたファイルはツールにより制限されています",
-          "PERMISSION_DENIED",
-        );
+          '指定されたファイルはツールにより制限されています',
+          'PERMISSION_DENIED',
+        )
       }
 
       try {
-        const message = await deleteLines(safeFilePath, startLine, endLine);
-        return await createMpcResponse(message);
+        const message = await deleteLines(safeFilePath, startLine, endLine)
+        return await createMpcResponse(message)
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-        return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+        return createMpcErrorResponse(errorMsg, '500', finalRequestId)
       }
     },
-  );
+  )
 
-  Object.keys(currentProject.scripts).map((name) => {
-    const scriptCmd = currentProject.scripts[name];
+  Object.keys(currentProject.scripts).map(name => {
+    const scriptCmd = currentProject.scripts[name]
     server.tool(
       `script_${name}`,
       `ユーザー指定のスクリプト. ${scriptCmd}`,
       {
-        requestId: z.string().optional().describe("リクエストID"),
+        requestId: z.string().optional().describe('リクエストID'),
       },
-      async ({ requestId }) => {
+      async ({requestId}) => {
         // リクエストIDがない場合はランダムなIDを生成
-        const finalRequestId = requestId || generateRequestId();
+        const finalRequestId = requestId || generateRequestId()
 
         requestLog(
           200,
           `スクリプト実行開始: ${name}`,
           currentProjectName,
-          "-",
+          '-',
           finalRequestId,
-        );
+        )
 
         try {
-          const result = await runScript(name, scriptCmd, currentProject.src);
+          const result = await runScript(name, scriptCmd, currentProject.src)
 
-          return await createMpcResponse(result);
+          return await createMpcResponse(result)
         } catch (error) {
           const errorMsg =
-            error instanceof Error ? error.message : String(error);
-          requestLog(500, errorMsg, currentProjectName, "-", finalRequestId);
-          return createMpcErrorResponse(errorMsg, "500", finalRequestId);
+            error instanceof Error ? error.message : String(error)
+          requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+          return createMpcErrorResponse(errorMsg, '500', finalRequestId)
         }
       },
-    );
-  });
+    )
+  })
 
   // STDIO トランスポートでサーバーを開始
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
 } catch (error) {
   if (error instanceof Error) {
-    const errorLog = createSystemLogger({});
+    const errorLog = createSystemLogger({})
     errorLog({
-      logLevel: "ERROR",
+      logLevel: 'ERROR',
       message: error.message,
       data: error.stack,
-    });
+    })
   }
 }

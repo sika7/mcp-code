@@ -43,21 +43,21 @@ MCP-Codeは、プログラミング用途に特化したAPIフレームワーク
 MCP-Codeは `~/.config/mcp-code/config.yaml` に設定ファイルを配置します。
 
 ```yaml
-log_path: "/path/to/logs"
+log_path: '/path/to/logs'
 excluded_files:
-  - "**/*.pem"
-  - "**/*.key"
+  - '**/*.pem'
+  - '**/*.key'
 
-current_project: "project1"
+current_project: 'project1'
 projects:
   project1:
-    src: "/path/to/project1/src"
+    src: '/path/to/project1/src'
     scripts:
-      build: "npm run build"
-      test: "npm run test"
+      build: 'npm run build'
+      test: 'npm run test'
     excluded_files:
-      - "**/.env"
-      - "logs/**/*.log"
+      - '**/.env'
+      - 'logs/**/*.log'
 ```
 
 ## ログパス
@@ -80,15 +80,16 @@ npm run build
 ```
 
 claude desktopなど
+
 ```json
 {
-    "mcpServers": {
-        "mcp_code": {
-            "command": "node",
-            "args": ["/your/path/to/directory/mcp-code/dist/server.js"],
-            "env": {}
-        }
+  "mcpServers": {
+    "mcp_code": {
+      "command": "node",
+      "args": ["/your/path/to/directory/mcp-code/dist/server.js"],
+      "env": {}
     }
+  }
 }
 ```
 
@@ -177,27 +178,31 @@ MCP-CodeはApache License 2.0の下で提供されています。詳細につい
 ## 今後追加する機能(予定)
 
 ### ファイル操作系
+
 - **ファイルコピー** - `fileCopy` でファイルやディレクトリの複製
 - **シンボリックリンク作成** - `createSymlink` でリンク作成
 
 ### コード解析系
+
 - **構文チェック** - TypeScript/JavaScript/Python等の構文エラーチェック
 - **依存関係解析** - import/requireの関係を可視化
 - **TODO/FIXME抽出** - コメント内のTODOを一覧化
 - **コード統計** - 行数、関数数、複雑度などの計測
 
 ### Git統合
+
 - **Git操作** - `gitStatus`, `gitDiff`, `gitCommit`, `gitBranch` など
 - **変更差分表示** - ファイルの変更点をより詳細に表示
 
 ### 開発支援
+
 - **パッケージ管理** - `npm install`的な依存関係インストール
 - **ログ監視** - リアルタイムでログファイル監視
 - **プロセス管理** - 実行中のプロセス管理や停止
 
 ### ユーティリティ
+
 - **ファイル比較** - 2つのファイルの差分表示
 - **アーカイブ操作** - zip/tar等の作成・展開
 - **ファイル権限変更** - chmod相当の機能
 - **ディスク使用量** - フォルダサイズの計算
-

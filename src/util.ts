@@ -1,30 +1,30 @@
-import { existsSync, mkdirSync, statSync } from "fs";
-import { Minimatch } from "minimatch";
-import path, { join } from "path";
-import * as os from "os";
+import {existsSync, mkdirSync, statSync} from 'fs'
+import {Minimatch} from 'minimatch'
+import path, {join} from 'path'
+import * as os from 'os'
 
 // export function cwdPath(filePath: string[]) {
 //   return join(process.cwd(), ...filePath);
 // }
 
 export function getHomePath(filePath: string[]): string {
-  const homeDir = os.homedir();
-  return join(homeDir, ...filePath);
+  const homeDir = os.homedir()
+  return join(homeDir, ...filePath)
 }
 
 export function getConfigPath(): string {
-  return getHomePath([".config", "mcp-code", "config.yaml"])
+  return getHomePath(['.config', 'mcp-code', 'config.yaml'])
 }
 
 export function getLogPath(filePath: string[]): string {
-  return getHomePath([".local", "state", "mcp-code", ...filePath])
+  return getHomePath(['.local', 'state', 'mcp-code', ...filePath])
 }
 /**
  * 対象ファイルが除外対象にマッチするかをチェックする
  */
 export const isExcluded = (filepath: string, patterns: string[]): boolean => {
-  return patterns.some((pattern) => new Minimatch(pattern).match(filepath));
-};
+  return patterns.some(pattern => new Minimatch(pattern).match(filepath))
+}
 
 /**
  * ランダムなリクエストIDを生成する関数
@@ -32,11 +32,11 @@ export const isExcluded = (filepath: string, patterns: string[]): boolean => {
  */
 export function generateRequestId(): string {
   // シンプルなUUID v4生成実装例
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 /**
@@ -51,31 +51,31 @@ export function normalizeToProjectRoot(
   projectRoot: string,
 ): string {
   // プロジェクトルートを正規化
-  const normalizedRoot = path.resolve(projectRoot);
+  const normalizedRoot = path.resolve(projectRoot)
 
   // 入力パスが空の場合はプロジェクトルートを返す
-  if (!inputPath || inputPath.trim() === "") {
-    return normalizedRoot;
+  if (!inputPath || inputPath.trim() === '') {
+    return normalizedRoot
   }
 
   // パスを正規化
-  let normalizedPath = path.normalize(inputPath);
+  let normalizedPath = path.normalize(inputPath)
 
   // 相対パスの場合はプロジェクトルートと結合
   if (!path.isAbsolute(normalizedPath)) {
-    normalizedPath = path.join(normalizedRoot, normalizedPath);
+    normalizedPath = path.join(normalizedRoot, normalizedPath)
   }
 
   // 正規化されたパスを取得
-  normalizedPath = path.resolve(normalizedPath);
+  normalizedPath = path.resolve(normalizedPath)
 
   // パスがプロジェクトディレクトリの外にあるかチェック
   if (!normalizedPath.startsWith(normalizedRoot)) {
     // プロジェクト外のパスの場合はプロジェクトルートに丸める
-    return normalizedRoot;
+    return normalizedRoot
   }
 
-  return normalizedPath;
+  return normalizedPath
 }
 
 /**
@@ -89,7 +89,7 @@ export function resolveSafeProjectPath(
   inputPath: string,
   projectRoot: string,
 ): string {
-  return normalizeToProjectRoot(inputPath, projectRoot);
+  return normalizeToProjectRoot(inputPath, projectRoot)
 }
 
 /**
@@ -106,23 +106,23 @@ export function isAllowedExtension(
 ): boolean {
   // 許可拡張子の指定がなければ常に許可
   if (!allowedExtensions || allowedExtensions.length === 0) {
-    return true;
+    return true
   }
 
   // ディレクトリの場合は常に許可
   if (existsSync(filePath) && statSync(filePath).isDirectory()) {
-    return true;
+    return true
   }
 
-  const ext = path.extname(filePath).toLowerCase();
+  const ext = path.extname(filePath).toLowerCase()
 
   // 拡張子がない場合は許可
   if (!ext) {
-    return true;
+    return true
   }
 
   // 拡張子が許可リストにあるかチェック
-  return allowedExtensions.includes(ext);
+  return allowedExtensions.includes(ext)
 }
 
 /**
@@ -136,21 +136,21 @@ export function ensureDirectoryExists(
   createMissingDirectories: boolean = false,
 ): void {
   if (!createMissingDirectories) {
-    return;
+    return
   }
 
-  let dirToCreate: string;
+  let dirToCreate: string
 
   // パスがディレクトリかファイルかを判定
   if (existsSync(filePath) && statSync(filePath).isDirectory()) {
-    dirToCreate = filePath;
+    dirToCreate = filePath
   } else {
-    dirToCreate = path.dirname(filePath);
+    dirToCreate = path.dirname(filePath)
   }
 
   // ディレクトリが存在しない場合は作成
   if (!existsSync(dirToCreate)) {
-    mkdirSync(dirToCreate, { recursive: true });
+    mkdirSync(dirToCreate, {recursive: true})
   }
 }
 
@@ -164,7 +164,7 @@ export function ensureDirectoryExists(
 function normalizeRootPath(projectRoot: string, pathSeparator: string): string {
   return projectRoot.endsWith(pathSeparator)
     ? projectRoot
-    : `${projectRoot}${pathSeparator}`;
+    : `${projectRoot}${pathSeparator}`
 }
 
 /**
@@ -173,9 +173,9 @@ function normalizeRootPath(projectRoot: string, pathSeparator: string): string {
  * @returns パスを検出するための正規表現
  */
 function getPathDetectionPattern(): RegExp {
-  return process.platform === "win32"
+  return process.platform === 'win32'
     ? /([A-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*)/gi // Windows パス
-    : /(\/(?:[^\/\0:*?"<>|\r\n]+\/)*[^\/\0:*?"<>|\r\n]*)/g; // Unix パス
+    : /(\/(?:[^\/\0:*?"<>|\r\n]+\/)*[^\/\0:*?"<>|\r\n]*)/g // Unix パス
 }
 
 /**
@@ -191,18 +191,18 @@ function convertPathToRelative(
 ): string {
   // パスが有効かチェック
   if (!absolutePath || absolutePath.length < normalizedRoot.length) {
-    return absolutePath;
+    return absolutePath
   }
 
   // パスがプロジェクトルートで始まるかチェック
   if (absolutePath.startsWith(normalizedRoot)) {
     // プロジェクトルートからの相対パスに変換
-    const relativePath = absolutePath.substring(normalizedRoot.length);
+    const relativePath = absolutePath.substring(normalizedRoot.length)
 
-    return relativePath;
+    return relativePath
   }
 
-  return absolutePath;
+  return absolutePath
 }
 
 /**
@@ -219,18 +219,18 @@ export function convertToRelativePaths(
   pathSeparator?: string,
 ): string {
   // パス区切り文字（デフォルト: /, \）
-  pathSeparator = pathSeparator ?? (process.platform === "win32" ? "\\" : "/");
+  pathSeparator = pathSeparator ?? (process.platform === 'win32' ? '\\' : '/')
 
   // プロジェクトルートのパスを正規化
-  const normalizedRoot = normalizeRootPath(projectRoot, pathSeparator);
+  const normalizedRoot = normalizeRootPath(projectRoot, pathSeparator)
 
   // パスを検出するための正規表現パターンを取得
-  const pathPattern = getPathDetectionPattern();
+  const pathPattern = getPathDetectionPattern()
 
   // テキスト内のパスを検出して変換
-  const resultText = text.replace(pathPattern, (match) => {
-    return convertPathToRelative(match, normalizedRoot);
-  });
+  const resultText = text.replace(pathPattern, match => {
+    return convertPathToRelative(match, normalizedRoot)
+  })
 
-  return resultText;
+  return resultText
 }

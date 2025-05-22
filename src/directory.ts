@@ -1,7 +1,7 @@
-import { promises as fs, rmSync } from "fs";
-import { createSystemLogger } from "./logs.js";
+import {promises as fs, rmSync} from 'fs'
+import {createSystemLogger} from './logs.js'
 
-const log = createSystemLogger({});
+const log = createSystemLogger({})
 
 /**
  * 指定されたパスにディレクトリを作成する（存在しない場合のみ）
@@ -9,20 +9,20 @@ const log = createSystemLogger({});
  */
 export async function createDirectory(dirPath: string) {
   try {
-    await fs.mkdir(dirPath, { recursive: true });
+    await fs.mkdir(dirPath, {recursive: true})
     log({
-      logLevel: "INFO",
+      logLevel: 'INFO',
       message: `ディレクトリを作成しました: ${dirPath}`,
-    });
+    })
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorMsg = error instanceof Error ? error.message : String(error)
     log({
-      logLevel: "ERROR",
+      logLevel: 'ERROR',
       message: `ディレクトリの作成に失敗しました: ${errorMsg}`,
-    });
-    throw error;
+    })
+    throw error
   }
-  return `ディレクトリを作成しました: ${dirPath}`;
+  return `ディレクトリを作成しました: ${dirPath}`
 }
 
 /**
@@ -31,20 +31,20 @@ export async function createDirectory(dirPath: string) {
  */
 export async function removeDirectory(dirPath: string) {
   try {
-    await fs.rm(dirPath, { recursive: true, force: true });
+    await fs.rm(dirPath, {recursive: true, force: true})
     log({
-      logLevel: "INFO",
+      logLevel: 'INFO',
       message: `ディレクトリを削除しました: ${dirPath}`,
-    });
+    })
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorMsg = error instanceof Error ? error.message : String(error)
     log({
-      logLevel: "ERROR",
+      logLevel: 'ERROR',
       message: `ディレクトリの削除に失敗しました: ${errorMsg}`,
-    });
-    throw error;
+    })
+    throw error
   }
-  return `ディレクトリを削除しました: ${dirPath}`;
+  return `ディレクトリを削除しました: ${dirPath}`
 }
 
 /**
@@ -53,10 +53,10 @@ export async function removeDirectory(dirPath: string) {
  */
 export function removeDirectorySync(dirPath: string): void {
   try {
-    rmSync(dirPath, { recursive: true, force: true });
-    console.log(`ディレクトリを削除しました: ${dirPath}`);
+    rmSync(dirPath, {recursive: true, force: true})
+    console.log(`ディレクトリを削除しました: ${dirPath}`)
   } catch (err: any) {
-    console.error(`ディレクトリの削除に失敗しました: ${err.message}`);
-    throw err;
+    console.error(`ディレクトリの削除に失敗しました: ${err.message}`)
+    throw err
   }
 }

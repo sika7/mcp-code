@@ -4,8 +4,8 @@
 export class InvalidExtensionError extends Error {
   constructor(filePath: string, allowedExtensions: string[]) {
     super(
-      `ファイル「${filePath}」は許可されていない拡張子です。許可されている拡張子: ${allowedExtensions.join(", ")}`,
-    );
-    this.name = "InvalidExtensionError";
+      `ファイル「${filePath}」は許可されていない拡張子です。許可されている拡張子: ${allowedExtensions.join(', ')}`,
+    )
+    this.name = 'InvalidExtensionError'
   }
 }
