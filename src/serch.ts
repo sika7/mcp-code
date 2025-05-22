@@ -84,7 +84,6 @@ interface FileGrepResult {
 
 interface DirectoryGrepResult {
   searchPattern: string;
-  searchPath: string;
   totalMatches: number;
   filesWithMatches: number;
   filesSearched: number;
@@ -648,7 +647,6 @@ export async function directoryGrep(
 
     return {
       searchPattern: pattern,
-      searchPath: dirPath,
       totalMatches,
       filesWithMatches,
       filesSearched,
