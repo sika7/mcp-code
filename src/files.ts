@@ -201,13 +201,21 @@ export async function editLines(
     try {
       await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
     } catch (error: unknown) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`File does not exist: ${filePath}`)
-      } else if (error.code === 'EACCES') {
-        throw new Error(`Permission denied: ${filePath}`)
-      } else {
-        throw error
+      if (error instanceof Error) {
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'ENOENT'
+        ) {
+          throw new Error(`File does not exist: ${filePath}`)
+        }
+        if (
+          error instanceof Error &&
+          (error as NodeJS.ErrnoException).code === 'EACCES'
+        ) {
+          throw new Error(`Permission denied: ${filePath}`)
+        }
       }
+      throw error
     }
 
     // ファイルの内容を読み込む
