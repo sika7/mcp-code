@@ -54,9 +54,16 @@ export async function removeDirectory(dirPath: string) {
 export function removeDirectorySync(dirPath: string): void {
   try {
     rmSync(dirPath, {recursive: true, force: true})
-    console.log(`ディレクトリを削除しました: ${dirPath}`)
-  } catch (err: any) {
-    console.error(`ディレクトリの削除に失敗しました: ${err.message}`)
-    throw err
+    log({
+      logLevel: 'INFO',
+      message: `ディレクトリを削除しました: ${dirPath}`,
+    })
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    log({
+      logLevel: 'ERROR',
+      message: `ディレクトリの削除に失敗しました: ${errorMsg}`,
+    })
+    throw error
   }
 }
