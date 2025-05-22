@@ -190,9 +190,9 @@ export async function fileMoveOrRename(
  */
 export async function editLines(
   filePath: string,
-  startLineNumber: number,
-  endLineNumber: number,
-  newContent: string | string[],
+  startLine: number,
+  endLine: number,
+  newContent: string,
 ): Promise<string> {
   try {
     // ファイルが存在するか確認
@@ -216,41 +216,32 @@ export async function editLines(
     const lines = content.split(eol);
 
     // 行番号のバリデーション
-    if (startLineNumber < 1 || startLineNumber > lines.length) {
+    if (startLine < 1 || startLine > lines.length + 1) {
       throw new Error(
-        `Start line number out of range: ${startLineNumber} (file has ${lines.length} lines)`,
+        `Start line number out of range: ${startLine} (file has ${lines.length} lines)`,
       );
     }
 
-    if (endLineNumber < startLineNumber || endLineNumber > lines.length) {
+    if (endLine < startLine || endLine > lines.length) {
       throw new Error(
-        `End line number out of range: ${endLineNumber} (file has ${lines.length} lines)`,
+        `End line number out of range: ${endLine} (file has ${lines.length} lines)`,
       );
     }
 
-    // 置換する行数
-    const numLinesToReplace = endLineNumber - startLineNumber + 1;
+    // 新しい内容を改行で分割
+    const newLines = newContent.split(/\r?\n/);
 
-    // 新しい内容を準備
-    let newLines: string[];
-    if (Array.isArray(newContent)) {
-      newLines = newContent;
-    } else {
-      // 元のファイルと同じ改行コードで分割
-      newLines = newContent.split(eol);
-    }
+    // 指定範囲の行を置換
+    lines.splice(startLine - 1, endLine - startLine + 1, ...newLines);
 
-    // 指定範囲の行を更新
-    lines.splice(startLineNumber - 1, numLinesToReplace, ...newLines);
-
-    // ファイルに書き戻す (元の改行コードを維持)
+    // ファイルに書き戻す
     await writeTextFile(filePath, lines.join(eol));
 
     log({
       logLevel: "INFO",
-      message: `Successfully edited lines ${startLineNumber}-${endLineNumber} in ${filePath}`,
+      message: `Successfully edited lines ${startLine}-${endLine} in ${filePath}`,
     });
-    return `Successfully edited lines ${startLineNumber}-${endLineNumber} in ${filePath}`;
+    return `Successfully edited lines ${startLine}-${endLine} in ${filePath}`;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     log({
