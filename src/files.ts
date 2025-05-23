@@ -340,17 +340,10 @@ export async function editLines(
     const lines = content.split(eol)
 
     // 行番号のバリデーション
-    if (startLine < 1 || startLine > lines.length + 1) {
-      throw new Error(
-        `Start line number out of range: ${startLine} (file has ${lines.length} lines)`,
-      )
-    }
+    validateLineNumber(startLine, lines.length, true)
 
-    if (endLine < startLine || endLine > lines.length) {
-      throw new Error(
-        `End line number out of range: ${endLine} (file has ${lines.length} lines)`,
-      )
-    }
+    // 範囲のバリデーション
+    validateLineRange(startLine, endLine, lines.length)
 
     // 新しい内容を改行で分割
     const newLines = newContent.split(/\r?\n/)
@@ -445,6 +438,41 @@ export async function insertLine(
 }
 
 /**
+ * 行番号が有効範囲内かチェックする
+ * @param line チェック対象の行番号（1ベース）
+ * @param totalLines ファイルの行数
+ * @param allowAppend 最終行の次（追記）を許容するか（デフォルト: false）
+ * @returns エラーがあれば文字列、なければ undefined
+ */
+function validateLineNumber(
+  line: number | undefined,
+  totalLines: number,
+  allowAppend = false,
+): string | undefined {
+  if (typeof line !== 'number') return // 未定義ならスキップ
+
+  const max = allowAppend ? totalLines + 1 : totalLines
+
+  if (line < 1 || line > max) {
+    return `行番号が範囲外です: ${line}（ファイルは ${totalLines} 行、許容範囲: 1 ～ ${max}）`
+  }
+
+  return
+}
+
+function validateLineRange(
+  startLine: number,
+  endLine: number,
+  totalLine: number,
+) {
+  if (endLine < startLine || endLine > totalLine) {
+    throw new Error(
+      `End line number out of range: ${endLine} (file has ${totalLine} lines)`,
+    )
+  }
+}
+
+/**
  * 特定の行を削除する
  * @param filePath 編集するファイルのパス
  * @param startLine 削除開始行番号 (1ベース)
@@ -486,17 +514,10 @@ export async function deleteLines(
     const lines = content.split(eol)
 
     // 行番号のバリデーション
-    if (startLine < 1 || startLine > lines.length) {
-      throw new Error(
-        `Start line number out of range: ${startLine} (file has ${lines.length} lines)`,
-      )
-    }
+    validateLineNumber(startLine, lines.length)
 
-    if (endLine < startLine || endLine > lines.length) {
-      throw new Error(
-        `End line number out of range: ${endLine} must be between ${startLine} and ${lines.length}`,
-      )
-    }
+    // 範囲のバリデーション
+    validateLineRange(startLine, endLine, lines.length)
 
     // 指定範囲の行を削除（第2引数は削除する要素数）
     const linesToDelete = endLine - startLine + 1
