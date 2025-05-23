@@ -336,11 +336,12 @@ export async function editLines(
     // ファイルに書き戻す
     await writeTextFile(filePath, lines.join(eol))
 
+    const message = `Successfully edited lines ${startLine}-${endLine} in ${filePath}`
     log({
       logLevel: 'INFO',
-      message: `Successfully edited lines ${startLine}-${endLine} in ${filePath}`,
+      message: message,
     })
-    return `Successfully edited lines ${startLine}-${endLine} in ${filePath}`
+    return message
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
     log({
@@ -379,11 +380,13 @@ export async function insertLine(
 
     // ファイルに書き戻す (元の改行コードを維持)
     await writeTextFile(filePath, lines.join(eol))
+
+    const message = `Successfully inserted line at position ${lineNumber} in ${filePath}`
     log({
       logLevel: 'INFO',
-      message: `Successfully inserted line at position ${lineNumber} in ${filePath}`,
+      message: message,
     })
-    return `Successfully inserted line at position ${lineNumber} in ${filePath}`
+    return message
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
     log({
