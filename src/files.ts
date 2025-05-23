@@ -435,9 +435,9 @@ function deleteLinesInRanges(
 ) {
   // 指定範囲の行を削除
   // 1ベース → 0ベースに補正
-  const startIdx = startLine - 1;
-  const endIdx = endLine - 1;
-  return lines.filter((_, i) => i < startIdx || i > endIdx);
+  const startIdx = startLine - 1
+  const endIdx = endLine - 1
+  return lines.filter((_, i) => i < startIdx || i > endIdx)
 }
 
 /**
