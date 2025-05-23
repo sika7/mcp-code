@@ -8,6 +8,117 @@ import { createSystemLogger } from './logs.js'
 
 const log = createSystemLogger({})
 
+// ファイル読み込みオプションの型定義
+interface ReadFileOptions {
+  showLineNumbers?: boolean
+  startLine?: number // 表示開始行（1ベース）
+  endLine?: number // 表示終了行（1ベース）
+  maxLines?: number // 最大表示行数
+}
+
+// ファイルが存在するか確認
+async function assertFileExists(filePath: string): Promise<void> {
+  await fs.access(filePath)
+}
+
+// ファイルを読み込み行ごとに分割
+async function readFileLines(filePath: string): Promise<string[]> {
+  const rawContent = await fs.readFile(filePath, 'utf-8')
+  return rawContent.split(/\r?\n/)
+}
+
+// 行の範囲を計算
+function calculateLineRange(
+  totalLines: number,
+  options: ReadFileOptions,
+): { startLine: number; endLine: number; maxLines: number } {
+  const startLine = Math.max(1, options.startLine || 1)
+  const maxLines = options.maxLines || totalLines
+  const endLine = Math.min(
+    totalLines,
+    options.endLine || Math.min(startLine + maxLines - 1, totalLines),
+  )
+  return { startLine, endLine, maxLines }
+}
+
+// 指定範囲の行を抽出
+function extractDisplayLines(
+  lines: string[],
+  startLine: number,
+  endLine: number,
+): string[] {
+  return lines.slice(startLine - 1, endLine)
+}
+
+// 行番号付きでフォーマット
+function formatContent(
+  lines: string[],
+  startLine: number,
+  showLineNumbers: boolean,
+): string {
+  if (!showLineNumbers) return lines.join('\n')
+
+  const lineNumberWidth = String(startLine + lines.length - 1).length
+  return lines
+    .map((line, index) => {
+      const lineNum = startLine + index
+      const paddedNum = String(lineNum).padStart(lineNumberWidth, ' ')
+      return `${paddedNum}: ${line}`
+    })
+    .join('\n')
+}
+
+// メイン関数
+export async function readTextFileWithOptions(
+  filePath: string,
+  options: ReadFileOptions = {},
+): Promise<{
+  content: string
+  metadata: {
+    totalLines: number
+    displayedLines: number
+    startLine: number
+    endLine: number
+    truncated: boolean
+  }
+}> {
+  try {
+    await assertFileExists(filePath)
+
+    log({ logLevel: 'INFO', message: `Reading file: ${filePath}` })
+
+    const lines = await readFileLines(filePath)
+    const totalLines = lines.length
+
+    const { startLine, endLine } = calculateLineRange(totalLines, options)
+    const displayLines = extractDisplayLines(lines, startLine, endLine)
+    const truncated = endLine < totalLines || startLine > 1
+    const content = formatContent(
+      displayLines,
+      startLine,
+      !!options.showLineNumbers,
+    )
+
+    return {
+      content,
+      metadata: {
+        totalLines,
+        displayedLines: displayLines.length,
+        startLine,
+        endLine,
+        truncated,
+      },
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    log({
+      logLevel: 'ERROR',
+      message: `Error reading file: ${errorMsg}`,
+    })
+    throw new Error(`Failed to read file at ${filePath}: ${errorMsg}`)
+  }
+}
+
 /**
  * テキストファイルを読み込む
  * @param filePath 読み込むファイルのパス

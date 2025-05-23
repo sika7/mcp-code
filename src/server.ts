@@ -28,8 +28,7 @@ import {
   generateDirectoryTree,
   insertLine,
   listFiles,
-  parseFileContent,
-  readTextFile,
+  readTextFileWithOptions,
   writeTextFile,
 } from './files.js'
 import { createRequestErrorLogger, createSystemLogger } from './logs.js'
@@ -326,7 +325,14 @@ try {
     '指定ファイルの内容を返す.',
     {
       filePath: z.string().min(1).describe('読み込みたいファイルのパスを指定'),
-      requestId: z.string().optional().describe('リクエストID'),
+      showLineNumbers: z.boolean().default(true).describe('行番号を表示する'),
+      startLine: z.number().default(1).describe('表示開始行（1ベース）'),
+      endLine: z.number().optional().describe('表示終了行（1ベース）'),
+      maxLines: z.number().optional().describe('最大表示行数'),
+      requestId: z
+        .string()
+        .default(generateRequestId())
+        .describe('リクエストID'),
     },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
@@ -342,13 +348,15 @@ try {
       }
 
       try {
-        const content = await readTextFile(safeFilePath)
-        const lines = parseFileContent(content)
+        const { content, metadata } = await readTextFileWithOptions(
+          safeFilePath,
+          {},
+        )
 
         return await createMpcResponse(
           content,
           {
-            lines: lines,
+            ...metadata,
           },
           finalRequestId,
         )
