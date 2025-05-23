@@ -480,8 +480,8 @@ try {
   )
 
   server.tool(
-    'fileInsertLine',
-    '指定ファイルの指定行に追記する. ',
+    'insertLinesInFile',
+    '指定ファイルの指定行に複数追記する. ',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
@@ -532,8 +532,8 @@ try {
   )
 
   server.tool(
-    'fileEditLines',
-    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.',
+    'editLinesInFile',
+    '指定ファイルの指定行を複数編集する. startLine = endLineで一行のみ編集.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
@@ -584,8 +584,8 @@ try {
   )
 
   server.tool(
-    'fileDeleteLines',
-    '指定ファイルの特定行を削除する.',
+    'deleteLinesInFile',
+    '指定ファイルの特定行を複数削除する.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
