@@ -16,17 +16,6 @@ interface ReadFileOptions {
   maxLines?: number // 最大表示行数
 }
 
-// ファイルが存在するか確認
-async function assertFileExists(filePath: string): Promise<void> {
-  await fs.access(filePath)
-}
-
-// ファイルを読み込み行ごとに分割
-async function readFileLines(filePath: string): Promise<string[]> {
-  const rawContent = await fs.readFile(filePath, 'utf-8')
-  return rawContent.split(/\r?\n/)
-}
-
 // 行の範囲を計算
 function calculateLineRange(
   totalLines: number,
@@ -86,11 +75,9 @@ export async function readTextFileWithOptions(
   }
 }> {
   try {
-    await assertFileExists(filePath)
-
+    const { lines } = await readTextFile(filePath)
     log({ logLevel: 'INFO', message: `Reading file: ${filePath}` })
 
-    const lines = await readFileLines(filePath)
     const totalLines = lines.length
 
     const { startLine, endLine } = calculateLineRange(totalLines, options)
