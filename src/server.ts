@@ -466,7 +466,7 @@ try {
 
   server.tool(
     'fileInsertLine',
-    '指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの指定行に追記する. ',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       lineNumber: z
@@ -493,7 +493,9 @@ try {
       try {
         const message = await insertLine(safeFilePath, lineNumber, content)
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} \n 行番号指定のため同じファイルに使用する際はファイルを読み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -504,7 +506,7 @@ try {
 
   server.tool(
     'fileEditLines',
-    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       startLine: z
@@ -545,7 +547,9 @@ try {
           content,
         )
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} \n 行番号指定のため同じファイルに使用する際はファイルを読み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -556,7 +560,7 @@ try {
 
   server.tool(
     'fileDeleteLines',
-    '指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの特定行を削除する.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       startLine: z
@@ -587,7 +591,9 @@ try {
       try {
         const message = await deleteLines(safeFilePath, startLine, endLine)
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} \n 行番号指定のため同じファイルに使用する際はファイルを読み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
