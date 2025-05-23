@@ -122,12 +122,19 @@ export async function readTextFileWithOptions(
   }
 }
 
+interface TextLineContents {
+  eol: string
+  lines: string[]
+}
+
 /**
  * テキストファイルを読み込む
  * @param filePath 読み込むファイルのパス
  * @returns ファイルの内容
  */
-export async function readTextFile(filePath: string): Promise<string> {
+export async function readTextFile(
+  filePath: string,
+): Promise<TextLineContents> {
   try {
     // ファイルが存在するか確認
     await fs.access(filePath)
@@ -136,7 +143,12 @@ export async function readTextFile(filePath: string): Promise<string> {
       logLevel: 'INFO',
       message: `Reading file: ${filePath}`,
     })
-    return await fs.readFile(filePath, 'utf-8')
+    const content = await fs.readFile(filePath, 'utf-8')
+
+    // 元のファイルの改行コードを検出
+    const eol = content.includes('\r\n') ? '\r\n' : '\n'
+    const lines = content.split(eol)
+    return { eol: eol, lines: lines }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
     log({
@@ -333,11 +345,7 @@ export async function editLines(
     }
 
     // ファイルの内容を読み込む
-    const content = await readTextFile(filePath)
-
-    // 元のファイルの改行コードを検出
-    const eol = content.includes('\r\n') ? '\r\n' : '\n'
-    const lines = content.split(eol)
+    const { eol, lines } = await readTextFile(filePath)
 
     // 行番号のバリデーション
     validateLineNumber(startLine, lines.length, true)
@@ -404,11 +412,7 @@ export async function insertLine(
     }
 
     // ファイルの内容を読み込む
-    const fileContent = await readTextFile(filePath)
-
-    // 元のファイルの改行コードを検出
-    const eol = fileContent.includes('\r\n') ? '\r\n' : '\n'
-    const lines = fileContent.split(eol)
+    const { eol, lines } = await readTextFile(filePath)
 
     // 行番号のバリデーション (ファイルの末尾への追加も許可)
     if (lineNumber < 1 || lineNumber > lines.length + 1) {
@@ -507,11 +511,7 @@ export async function deleteLines(
     }
 
     // ファイルの内容を読み込む
-    const content = await readTextFile(filePath)
-
-    // 元のファイルの改行コードを検出
-    const eol = content.includes('\r\n') ? '\r\n' : '\n'
-    const lines = content.split(eol)
+    const { eol, lines } = await readTextFile(filePath)
 
     // 行番号のバリデーション
     validateLineNumber(startLine, lines.length)
