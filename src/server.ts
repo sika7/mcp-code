@@ -22,12 +22,11 @@ import { loadConfig } from './config.js'
 import { createDirectory, removeDirectory } from './directory.js'
 import {
   deleteFile,
-  editLines,
   fileMoveOrRename,
   generateDirectoryTree,
-  insertLine,
   listFiles,
   mulchDeleteLines,
+  mulchEditLines,
   mulchInsertLines,
   readTextFileWithOptions,
   writeTextFile,
@@ -535,24 +534,31 @@ try {
     '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
-      startLine: z
-        .number()
-        .min(1)
-        .default(1)
-        .describe('編集したい行番号(1ベース)'),
-      endLine: z
-        .number()
-        .min(1)
-        .default(1)
-        .describe('編集したい行番号(1ベース)'),
-      content: z
+      editlines: z.array(
+        z.object({
+          startLine: z
+            .number()
+            .min(1)
+            .default(1)
+            .describe('編集したい行番号(1ベース)'),
+          endLine: z
+            .number()
+            .min(1)
+            .default(1)
+            .describe('編集したい行番号(1ベース)'),
+          content: z
+            .string()
+            .describe(
+              '編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+            ),
+        }),
+      ),
+      requestId: z
         .string()
-        .describe(
-          '編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
-        ),
-      requestId: z.string().optional().describe('リクエストID'),
+        .default(generateRequestId())
+        .describe('リクエストID'),
     },
-    async ({ filePath, startLine, endLine, content, requestId }) => {
+    async ({ filePath, editlines, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -566,12 +572,7 @@ try {
       }
 
       try {
-        const message = await editLines(
-          safeFilePath,
-          startLine,
-          endLine,
-          content,
-        )
+        const message = await mulchEditLines(safeFilePath, editlines)
         const result = convertToRelativePaths(message, currentProject.src)
         return await createMpcResponse(result)
       } catch (error) {

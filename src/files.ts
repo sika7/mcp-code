@@ -637,6 +637,75 @@ export async function mulchInsertLines(
   return message
 }
 
+interface MulchEditLines {
+  startLine: number // 表示開始行（1ベース）
+  endLine: number // 表示終了行（1ベース）
+  content: string
+}
+
+interface MulchEditLinesData {
+  start: number // 表示開始行（1ベース）
+  end: number // 表示開始行（1ベース）
+  content: string
+  index: number //
+}
+
+function mulchEditLineToData(lines: MulchEditLines[]) {
+  const newLines = lines.map((r, idx) => ({
+    start: r.startLine,
+    end: r.endLine,
+    content: r.content,
+    index: idx,
+  }))
+  return newLines as MulchEditLinesData[]
+}
+
+export async function mulchEditLines(
+  filePath: string,
+  editlines: MulchEditLines[],
+) {
+  validateLineRanges(editlines)
+
+  // データ型を変更
+  let linesData = mulchEditLineToData(editlines)
+
+  // ソート
+  linesData = sortByStartLine<MulchEditLinesData[]>(linesData)
+
+  // 範囲の重複チェック
+  validateNonOverlappingRanges(linesData)
+
+  // 後ろから処理するため降順にソート
+  linesData = sortByStartLineDescending(linesData)
+
+  // ファイルの内容を読み込む
+  const { eol, lines } = await readTextFile(filePath)
+
+  const editLinesMsg: string[] = []
+  let editLines: string[] = [...lines]
+
+  // 処理
+  linesData.map(item => {
+    editLines = replaceRange(
+      editLines,
+      item.start,
+      item.end,
+      item.content.split(/\r?\n/),
+    )
+    editLinesMsg.push(`[${item.start}-${item.end}]`)
+  })
+
+  // ファイルに書き戻す (元の改行コードを維持)
+  await writeTextFile(filePath, editLines.join(eol))
+
+  const message = `Successfully Edit lines: ${editLinesMsg.join(' ')} in ${filePath}`
+  log({
+    logLevel: 'INFO',
+    message: message,
+  })
+  return message
+}
+
 export async function mulchDeleteLines(
   filePath: string,
   editlines: MulchLines[],
