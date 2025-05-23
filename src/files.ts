@@ -433,9 +433,11 @@ function deleteLinesInRanges(
   startLine: number,
   endLine: number,
 ) {
-  // 指定範囲の行を削除（第2引数は削除する要素数）
-  const linesToDelete = endLine - startLine + 1
-  return lines.splice(startLine - 1, linesToDelete)
+  // 指定範囲の行を削除
+  // 1ベース → 0ベースに補正
+  const startIdx = startLine - 1;
+  const endIdx = endLine - 1;
+  return lines.filter((_, i) => i < startIdx || i > endIdx);
 }
 
 /**
@@ -566,7 +568,7 @@ export async function mulchDeleteLines(
   let editLines: string[] = [...lines]
 
   // 処理
-  linesData.map(async item => {
+  linesData.map(item => {
     editLines = deleteLinesInRanges(editLines, item.start, item.end)
     deleteLinesMsg.push(`[${item.start}-${item.end}]`)
   })
