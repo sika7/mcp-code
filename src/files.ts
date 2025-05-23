@@ -137,7 +137,7 @@ export async function readTextFile(
 ): Promise<TextLineContents> {
   try {
     // ファイルが存在するか確認
-    await fs.access(filePath)
+    await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
 
     log({
       logLevel: 'INFO',
@@ -155,6 +155,14 @@ export async function readTextFile(
       logLevel: 'ERROR',
       message: `Error reading file: ${errorMsg}`,
     })
+    if (error instanceof Error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`File does not exist: ${filePath}`)
+      }
+      if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        throw new Error(`Permission denied: ${filePath}`)
+      }
+    }
     throw new Error(`Failed to read file at ${filePath}: ${errorMsg}`)
   }
 }
@@ -323,27 +331,6 @@ export async function editLines(
   newContent: string,
 ): Promise<string> {
   try {
-    // ファイルが存在するか確認
-    try {
-      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'ENOENT'
-        ) {
-          throw new Error(`File does not exist: ${filePath}`)
-        }
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'EACCES'
-        ) {
-          throw new Error(`Permission denied: ${filePath}`)
-        }
-      }
-      throw error
-    }
-
     // ファイルの内容を読み込む
     const { eol, lines } = await readTextFile(filePath)
 
@@ -390,27 +377,6 @@ export async function insertLine(
   content: string,
 ): Promise<string> {
   try {
-    // ファイルが存在するか確認
-    try {
-      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'ENOENT'
-        ) {
-          throw new Error(`File does not exist: ${filePath}`)
-        }
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'EACCES'
-        ) {
-          throw new Error(`Permission denied: ${filePath}`)
-        }
-      }
-      throw error
-    }
-
     // ファイルの内容を読み込む
     const { eol, lines } = await readTextFile(filePath)
 
@@ -489,27 +455,6 @@ export async function deleteLines(
   endLine: number,
 ) {
   try {
-    // ファイルが存在するか確認
-    try {
-      await fs.access(filePath, fs.constants.F_OK | fs.constants.W_OK)
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'ENOENT'
-        ) {
-          throw new Error(`File does not exist: ${filePath}`)
-        }
-        if (
-          error instanceof Error &&
-          (error as NodeJS.ErrnoException).code === 'EACCES'
-        ) {
-          throw new Error(`Permission denied: ${filePath}`)
-        }
-      }
-      throw error
-    }
-
     // ファイルの内容を読み込む
     const { eol, lines } = await readTextFile(filePath)
 
