@@ -428,8 +428,13 @@ function validateLineRange(
   }
 }
 
-function insertLinesAt(lines: string[], insert: string[], line: number) {
-  const index = line - 1 // 1ベース → 0ベース補正
+function insertLinesAt(
+  lines: string[],
+  insert: string[],
+  line: number,
+  afterMode: boolean = false,
+) {
+  const index = afterMode ? line : line - 1 // 1ベース → 0ベース補正
   return [...lines.slice(0, index), ...insert, ...lines.slice(index)]
 }
 
