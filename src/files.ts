@@ -428,6 +428,16 @@ function validateLineRange(
   }
 }
 
+function deleteLinesInRanges(
+  lines: string[],
+  startLine: number,
+  endLine: number,
+) {
+  // 指定範囲の行を削除（第2引数は削除する要素数）
+  const linesToDelete = endLine - startLine + 1
+  return lines.splice(startLine - 1, linesToDelete)
+}
+
 /**
  * 特定の行を削除する
  * @param filePath 編集するファイルのパス
@@ -450,12 +460,11 @@ export async function deleteLines(
     // 範囲のバリデーション
     validateLineRange(startLine, endLine, lines.length)
 
-    // 指定範囲の行を削除（第2引数は削除する要素数）
-    const linesToDelete = endLine - startLine + 1
-    lines.splice(startLine - 1, linesToDelete)
+    // 指定範囲の行を削除
+    const newLines = deleteLinesInRanges(lines, startLine, endLine)
 
     // ファイルに書き戻す (元の改行コードを維持)
-    await writeTextFile(filePath, lines.join(eol))
+    await writeTextFile(filePath, newLines.join(eol))
 
     const message =
       startLine === endLine
