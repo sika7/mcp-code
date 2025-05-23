@@ -369,11 +369,7 @@ export async function insertLine(
     const { eol, lines } = await readTextFile(filePath)
 
     // 行番号のバリデーション (ファイルの末尾への追加も許可)
-    if (lineNumber < 1 || lineNumber > lines.length + 1) {
-      throw new Error(
-        `Line number out of range: ${lineNumber} (file has ${lines.length} lines)`,
-      )
-    }
+    validateLineNumber(lineNumber, lines.length, true)
 
     // 指定位置に行を挿入
     lines.splice(lineNumber - 1, 0, content)
