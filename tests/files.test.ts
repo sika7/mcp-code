@@ -34,10 +34,10 @@ async function testReadTextFile() {
   const filePath = await createTestFile("read-test.txt", content);
 
   // ファイルの読み込み
-  const readContent = await readTextFile(filePath);
+  const { eol, lines } = await readTextFile(filePath);
 
   // 検証
-  assertEqual(readContent, content, "ファイルが正しく読み込まれること");
+  assertEqual(lines.join(eol), content, "ファイルが正しく読み込まれること");
 
   // 存在しないファイル
   try {
@@ -46,7 +46,7 @@ async function testReadTextFile() {
   } catch (error) {
     const errorMessage = (error as Error).message;
     assertEqual(
-      errorMessage.includes("Failed to read file"),
+      errorMessage.includes("File does not exist"),
       true,
       "存在しないファイルの読み込みでエラーが発生すること",
     );
