@@ -34,10 +34,13 @@ function calculateLineRange(
 ): { startLine: number; endLine: number; maxLines: number } {
   const startLine = Math.max(1, options.startLine || 1)
   const maxLines = options.maxLines || totalLines
-  const endLine = Math.min(
-    totalLines,
-    options.endLine || Math.min(startLine + maxLines - 1, totalLines),
-  )
+
+  const userEndLine = options.endLine || totalLines
+  const maxEndLine = startLine + maxLines - 1
+
+  // endLineがmaxLinesの制限を超える場合は丸める
+  const endLine = Math.min(totalLines, maxEndLine, userEndLine)
+
   return { startLine, endLine, maxLines }
 }
 
