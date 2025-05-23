@@ -481,7 +481,7 @@ try {
 
   server.tool(
     'fileInsertLine',
-    '指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの指定行に追記する. ',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
@@ -531,7 +531,7 @@ try {
 
   server.tool(
     'fileEditLines',
-    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの指定行を編集する. startLine = endLineで一行のみ編集.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
@@ -549,7 +549,7 @@ try {
           content: z
             .string()
             .describe(
-              '編集する内容.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+              '編集する内容.',
             ),
         }),
       ),
@@ -585,7 +585,7 @@ try {
 
   server.tool(
     'fileDeleteLines',
-    '指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
+    '指定ファイルの特定行を削除する.',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
       editlines: z.array(
