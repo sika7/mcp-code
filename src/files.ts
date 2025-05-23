@@ -331,10 +331,10 @@ export async function editLines(
     const newLines = newContent.split(/\r?\n/)
 
     // 指定範囲の行を置換
-    lines.splice(startLine - 1, endLine - startLine + 1, ...newLines)
+    const result = replaceRange(lines, startLine, endLine, newLines)
 
     // ファイルに書き戻す
-    await writeTextFile(filePath, lines.join(eol))
+    await writeTextFile(filePath, result.join(eol))
 
     const message = `Successfully edited lines ${startLine}-${endLine} in ${filePath}`
     log({
@@ -436,6 +436,16 @@ function insertLinesAt(
 ) {
   const index = afterMode ? line : line - 1 // 1ベース → 0ベース補正
   return [...lines.slice(0, index), ...insert, ...lines.slice(index)]
+}
+
+function replaceRange<T>(
+  array: T[],
+  startLine: number,
+  end: number,
+  replacement: T[],
+): T[] {
+  const start = startLine - 1
+  return [...array.slice(0, start), ...replacement, ...array.slice(end)]
 }
 
 function deleteLinesInRanges(
