@@ -543,14 +543,88 @@ function validateNonOverlappingRanges(lines: MulchLinesData[]) {
   }
 }
 
+function hasDuplicates(
+  lines: MulchLinesData[] | MulchInsertLinesData[],
+): boolean {
+  const array = lines.map(i => i.start)
+  return new Set(array).size !== array.length
+}
+
 // スタート順にソートする
-function sortByStartLine(lines: MulchLinesData[]) {
-  return lines.sort((a, b) => a.start - b.start)
+function sortByStartLine<T>(lines: MulchLinesData[] | MulchInsertLinesData[]) {
+  return lines.sort((a, b) => a.start - b.start) as T
 }
 
 // 降順にソートする
-function sortByStartLineDescending(lines: MulchLinesData[]) {
-  return lines.sort((a, b) => b.start - a.start)
+function sortByStartLineDescending<T>(
+  lines: MulchLinesData[] | MulchInsertLinesData[],
+) {
+  return lines.sort((a, b) => b.start - a.start) as T
+}
+
+interface MulchInsertLines {
+  lineNumber: number // 表示開始行（1ベース）
+  content: string
+}
+
+interface MulchInsertLinesData {
+  start: number // 表示開始行（1ベース）
+  content: string
+  index: number //
+}
+
+function mulchInsertLineToData(lines: MulchInsertLines[]) {
+  const newLines = lines.map((r, idx) => ({
+    start: r.lineNumber,
+    content: r.content,
+    index: idx,
+  }))
+  return newLines as MulchInsertLinesData[]
+}
+
+export async function mulchInsertLines(
+  filePath: string,
+  editlines: MulchInsertLines[],
+  afterMode: boolean = false,
+) {
+  // データ型を変更
+  let linesData = mulchInsertLineToData(editlines)
+
+  // 重複をチェック
+  if (hasDuplicates(linesData)) {
+    throw new Error('インサート行に重複があります。')
+  }
+
+  // 後ろから処理するため降順にソート
+  linesData = sortByStartLineDescending<MulchInsertLinesData[]>(linesData)
+
+  // ファイルの内容を読み込む
+  const { eol, lines } = await readTextFile(filePath)
+
+  const insertLinesMsg: string[] = []
+  let editLines: string[] = [...lines]
+
+  // 処理
+  linesData.map(item => {
+    // 指定位置に行を挿入
+    editLines = insertLinesAt(
+      editLines,
+      item.content.split(/\r?\n/),
+      item.start,
+      afterMode,
+    )
+    insertLinesMsg.push(`[${item.start}]`)
+  })
+
+  // ファイルに書き戻す (元の改行コードを維持)
+  await writeTextFile(filePath, editLines.join(eol))
+
+  const message = `Successfully Insert lines: ${insertLinesMsg.join(' ')} in ${filePath}`
+  log({
+    logLevel: 'INFO',
+    message: message,
+  })
+  return message
 }
 
 export async function mulchDeleteLines(
@@ -563,7 +637,7 @@ export async function mulchDeleteLines(
   let linesData = mulchLineToData(editlines)
 
   // ソート
-  linesData = sortByStartLine(linesData)
+  linesData = sortByStartLine<MulchLinesData[]>(linesData)
 
   // 範囲の重複チェック
   validateNonOverlappingRanges(linesData)

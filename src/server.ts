@@ -28,6 +28,7 @@ import {
   insertLine,
   listFiles,
   mulchDeleteLines,
+  mulchInsertLines,
   readTextFileWithOptions,
   writeTextFile,
 } from './files.js'
@@ -484,15 +485,23 @@ try {
     '指定ファイルの指定行に追記する. 行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
-      lineNumber: z
-        .number()
-        .min(1)
-        .default(1)
-        .describe('編集したい行番号(1ベース)'),
-      content: z.string().describe('追記する内容'),
-      requestId: z.string().optional().describe('リクエストID'),
+      editlines: z.array(
+        z.object({
+          lineNumber: z
+            .number()
+            .min(1)
+            .default(1)
+            .describe('編集したい行番号(1ベース)'),
+          content: z.string().describe('追記する内容'),
+        }),
+      ),
+      afterMode: z.boolean().default(false).describe('指定行より後に追加'),
+      requestId: z
+        .string()
+        .default(generateRequestId())
+        .describe('リクエストID'),
     },
-    async ({ filePath, lineNumber, content, requestId }) => {
+    async ({ filePath, editlines, afterMode, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -506,7 +515,11 @@ try {
       }
 
       try {
-        const message = await insertLine(safeFilePath, lineNumber, content)
+        const message = await mulchInsertLines(
+          safeFilePath,
+          editlines,
+          afterMode,
+        )
         const result = convertToRelativePaths(message, currentProject.src)
         return await createMpcResponse(result)
       } catch (error) {
