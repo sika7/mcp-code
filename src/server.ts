@@ -520,7 +520,9 @@ try {
           afterMode,
         )
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -546,11 +548,7 @@ try {
             .min(1)
             .default(1)
             .describe('編集したい行番号(1ベース)'),
-          content: z
-            .string()
-            .describe(
-              '編集する内容.',
-            ),
+          content: z.string().describe('編集する内容.'),
         }),
       ),
       requestId: z
@@ -574,7 +572,9 @@ try {
       try {
         const message = await mulchEditLines(safeFilePath, editlines)
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -623,7 +623,9 @@ try {
       try {
         const message = await mulchDeleteLines(safeFilePath, editlines)
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(result)
+        return await createMpcResponse(
+          `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
+        )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
