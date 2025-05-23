@@ -334,7 +334,14 @@ try {
         .default(generateRequestId())
         .describe('リクエストID'),
     },
-    async ({ filePath, requestId }) => {
+    async ({
+      filePath,
+      showLineNumbers,
+      startLine,
+      endLine,
+      maxLines,
+      requestId,
+    }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -350,7 +357,7 @@ try {
       try {
         const { content, metadata } = await readTextFileWithOptions(
           safeFilePath,
-          {},
+          { showLineNumbers, startLine, endLine, maxLines },
         )
 
         return await createMpcResponse(
