@@ -419,7 +419,8 @@ try {
 
       try {
         const message = await deleteFile(safeFilePath)
-        return await createMpcResponse(message)
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -453,7 +454,8 @@ try {
 
       try {
         const message = await fileMoveOrRename(safeSrcPath, safeDistPath)
-        return await createMpcResponse(message)
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -490,7 +492,8 @@ try {
 
       try {
         const message = await insertLine(safeFilePath, lineNumber, content)
-        return await createMpcResponse(message)
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -541,7 +544,8 @@ try {
           endLine,
           content,
         )
-        return await createMpcResponse(message)
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
@@ -582,7 +586,8 @@ try {
 
       try {
         const message = await deleteLines(safeFilePath, startLine, endLine)
-        return await createMpcResponse(message)
+        const result = convertToRelativePaths(message, currentProject.src)
+        return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
