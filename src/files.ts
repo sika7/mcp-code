@@ -372,10 +372,10 @@ export async function insertLine(
     validateLineNumber(lineNumber, lines.length, true)
 
     // 指定位置に行を挿入
-    lines.splice(lineNumber - 1, 0, content)
+    const newLines = insertLinesAt(lines, content.split(/\r?\n/), lineNumber)
 
     // ファイルに書き戻す (元の改行コードを維持)
-    await writeTextFile(filePath, lines.join(eol))
+    await writeTextFile(filePath, newLines.join(eol))
 
     const message = `Successfully inserted line at position ${lineNumber} in ${filePath}`
     log({
@@ -426,6 +426,11 @@ function validateLineRange(
       `End line number out of range: ${endLine} (file has ${totalLine} lines)`,
     )
   }
+}
+
+function insertLinesAt(lines: string[], insert: string[], line: number) {
+  const index = line - 1 // 1ベース → 0ベース補正
+  return [...lines.slice(0, index), ...insert, ...lines.slice(index)]
 }
 
 function deleteLinesInRanges(
