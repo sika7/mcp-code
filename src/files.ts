@@ -486,6 +486,102 @@ export async function deleteLines(
   }
 }
 
+interface MulchLines {
+  startLine: number // 表示開始行（1ベース）
+  endLine: number // 表示終了行（1ベース）
+}
+
+interface MulchLinesData {
+  start: number // 表示開始行（1ベース）
+  end: number // 表示終了行（1ベース）
+  index: number //
+}
+
+function mulchLineToData(lines: MulchLines[]) {
+  const newLines = lines.map((r, idx) => ({
+    start: r.startLine,
+    end: r.endLine,
+    index: idx,
+  }))
+  return newLines as MulchLinesData[]
+}
+
+function validateLineRanges(lines: MulchLines[]) {
+  const index = lines.findIndex(item => item.endLine < item.startLine)
+  // スタートよりエンドが小さい項目があるか
+  if (index !== -1) {
+    const startLine = lines[index].startLine
+    const endLine = lines[index].endLine
+    throw Error(
+      `項目 ${index + 1}: endLine (${endLine}) は startLine (${startLine}) より小さくできません`,
+    )
+  }
+}
+
+function validateNonOverlappingRanges(lines: MulchLinesData[]) {
+  for (let i = 1; i < lines.length; i++) {
+    const prev = lines[i - 1]
+    const curr = lines[i]
+
+    // 重複とは「現在のstartが前のend以下」の場合
+    if (curr.start <= prev.end) {
+      const msg = `項目 ${prev.index + 1}（${prev.start}-${prev.end}）と項目 ${curr.index + 1}（${curr.start}-${curr.end}）の行範囲が重複しています`
+      throw new Error(msg)
+    }
+  }
+}
+
+// スタート順にソートする
+function sortByStartLine(lines: MulchLinesData[]) {
+  return lines.sort((a, b) => a.start - b.start)
+}
+
+// 降順にソートする
+function sortByStartLineDescending(lines: MulchLinesData[]) {
+  return lines.sort((a, b) => b.start - a.start)
+}
+
+export async function mulchDeleteLines(
+  filePath: string,
+  editlines: MulchLines[],
+) {
+  validateLineRanges(editlines)
+
+  // データ型を変更
+  let linesData = mulchLineToData(editlines)
+
+  // ソート
+  linesData = sortByStartLine(linesData)
+
+  // 範囲の重複チェック
+  validateNonOverlappingRanges(linesData)
+
+  // 後ろから処理するため降順にソート
+  linesData = sortByStartLineDescending(linesData)
+
+  // ファイルの内容を読み込む
+  const { eol, lines } = await readTextFile(filePath)
+
+  const deleteLinesMsg: string[] = []
+  let editLines: string[] = [...lines]
+
+  // 処理
+  linesData.map(async item => {
+    editLines = deleteLinesInRanges(editLines, item.start, item.end)
+    deleteLinesMsg.push(`[${item.start}-${item.end}]`)
+  })
+
+  // ファイルに書き戻す (元の改行コードを維持)
+  await writeTextFile(filePath, editLines.join(eol))
+
+  const message = `Successfully Deleted lines: ${deleteLinesMsg.join(' ')} in ${filePath}`
+  log({
+    logLevel: 'INFO',
+    message: message,
+  })
+  return message
+}
+
 /**
  * テキストファイルの内容を解析する関数（例）
  * @param content - ファイルの内容

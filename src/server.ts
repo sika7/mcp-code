@@ -22,12 +22,12 @@ import { loadConfig } from './config.js'
 import { createDirectory, removeDirectory } from './directory.js'
 import {
   deleteFile,
-  deleteLines,
   editLines,
   fileMoveOrRename,
   generateDirectoryTree,
   insertLine,
   listFiles,
+  mulchDeleteLines,
   readTextFileWithOptions,
   writeTextFile,
 } from './files.js'
@@ -574,19 +574,26 @@ try {
     '指定ファイルの特定行を削除する.行番号指定のため複数回同じファイルに使用する際は逆順で編集しないとズレる',
     {
       filePath: z.string().min(1).describe('編集したいファイルのパスを指定'),
-      startLine: z
-        .number()
-        .min(1)
-        .default(1)
-        .describe('削除したい行番号(1ベース)'),
-      endLine: z
-        .number()
-        .min(1)
-        .default(1)
-        .describe('削除したい行番号(1ベース)'),
-      requestId: z.string().optional().describe('リクエストID'),
+      editlines: z.array(
+        z.object({
+          startLine: z
+            .number()
+            .min(1)
+            .default(1)
+            .describe('削除したい行番号(1ベース)'),
+          endLine: z
+            .number()
+            .min(1)
+            .default(1)
+            .describe('削除したい行番号(1ベース)'),
+        }),
+      ),
+      requestId: z
+        .string()
+        .default(generateRequestId())
+        .describe('リクエストID'),
     },
-    async ({ filePath, startLine, endLine, requestId }) => {
+    async ({ filePath, editlines, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -600,7 +607,7 @@ try {
       }
 
       try {
-        const message = await deleteLines(safeFilePath, startLine, endLine)
+        const message = await mulchDeleteLines(safeFilePath, editlines)
         const result = convertToRelativePaths(message, currentProject.src)
         return await createMpcResponse(result)
       } catch (error) {
