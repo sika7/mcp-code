@@ -633,40 +633,41 @@ try {
       }
     },
   )
+  if (currentProject.scripts) {
+    Object.keys(currentProject.scripts).map(name => {
+      const scriptCmd = currentProject.scripts[name]
+      server.tool(
+        `script_${name}`,
+        `ユーザー指定のスクリプト. ${scriptCmd}`,
+        {
+          requestId: z.string().optional().describe('リクエストID'),
+        },
+        async ({ requestId }) => {
+          // リクエストIDがない場合はランダムなIDを生成
+          const finalRequestId = requestId || generateRequestId()
 
-  Object.keys(currentProject.scripts).map(name => {
-    const scriptCmd = currentProject.scripts[name]
-    server.tool(
-      `script_${name}`,
-      `ユーザー指定のスクリプト. ${scriptCmd}`,
-      {
-        requestId: z.string().optional().describe('リクエストID'),
-      },
-      async ({ requestId }) => {
-        // リクエストIDがない場合はランダムなIDを生成
-        const finalRequestId = requestId || generateRequestId()
+          requestLog(
+            200,
+            `スクリプト実行開始: ${name}`,
+            currentProjectName,
+            '-',
+            finalRequestId,
+          )
 
-        requestLog(
-          200,
-          `スクリプト実行開始: ${name}`,
-          currentProjectName,
-          '-',
-          finalRequestId,
-        )
+          try {
+            const result = await runScript(name, scriptCmd, currentProject.src)
 
-        try {
-          const result = await runScript(name, scriptCmd, currentProject.src)
-
-          return await createMpcResponse(result)
-        } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : String(error)
-          requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
-          return createMpcErrorResponse(errorMsg, '500', finalRequestId)
-        }
-      },
-    )
-  })
+            return await createMpcResponse(result)
+          } catch (error) {
+            const errorMsg =
+              error instanceof Error ? error.message : String(error)
+            requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)
+            return createMpcErrorResponse(errorMsg, '500', finalRequestId)
+          }
+        },
+      )
+    })
+  }
 
   // STDIO トランスポートでサーバーを開始
   const transport = new StdioServerTransport()
