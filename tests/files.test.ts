@@ -128,39 +128,67 @@ async function testListFiles() {
   // テスト環境のセットアップ
   const testDir = await setupTestDirectory();
 
-  // テストファイルの作成
-  await createTestFile("file1.txt", "content 1");
-  await createTestFile("file2.txt", "content 2");
-  await createTestFile("file3.js", 'console.log("test");');
+  console.log(`テストディレクトリ: ${testDir}`);
 
-  // ファイル一覧の取得
-  const files = await listFiles(testDir);
-
-  // 検証
-  assertEqual(files.length, 3, "正しいファイル数が返されること");
-
-  // フィルター付きのファイル一覧
-  const txtFiles = await listFiles(testDir, "\\.txt$");
-
-  // 検証
-  assertEqual(txtFiles.length, 2, "フィルターが正しく適用されること");
-  assertEqual(
-    txtFiles.every((f) => f.endsWith(".txt")),
-    true,
-    ".txtファイルのみが返されること",
-  );
-
-  // 存在しないディレクトリ
   try {
-    await listFiles(path.join(testDir, "non-existent-dir"));
-    throw new Error("エラーが発生しなかった");
-  } catch (error) {
-    const errorMessage = (error as Error).message;
+    // テストファイルの作成ー直接テストディレクトリに作成
+    console.log("テストファイルを作成中...");
+    
+    const file1Path = path.join(testDir, "file1.txt");
+    const file2Path = path.join(testDir, "file2.txt");
+    const file3Path = path.join(testDir, "file3.js");
+    
+    await fs.writeFile(file1Path, "content 1", "utf-8");
+    await fs.writeFile(file2Path, "content 2", "utf-8");
+    await fs.writeFile(file3Path, 'console.log("test");', "utf-8");
+    
+    console.log("テストファイル作成完了");
+    
+    // ファイルが実際に作成されたか確認
+    console.log(`file1.txt存在: ${existsSync(file1Path)}`);
+    console.log(`file2.txt存在: ${existsSync(file2Path)}`);
+    console.log(`file3.js存在: ${existsSync(file3Path)}`);
+
+    // ファイル一覧の取得
+    console.log("ファイル一覧を取得中...");
+    const files = await listFiles(testDir);
+    console.log(`取得されたファイル数: ${files.length}`);
+    console.log(`ファイル一覧: ${JSON.stringify(files, null, 2)}`);
+
+    // 検証
+    assertEqual(files.length, 3, "正しいファイル数が返されること");
+
+    // フィルター付きのファイル一覧
+    console.log("フィルター付きファイル一覧を取得中...");
+    const txtFiles = await listFiles(testDir, "\\.txt$");
+    console.log(`フィルター後のファイル数: ${txtFiles.length}`);
+    console.log(`フィルター後のファイル一覧: ${JSON.stringify(txtFiles, null, 2)}`);
+
+    // 検証
+    assertEqual(txtFiles.length, 2, "フィルターが正しく適用されること");
     assertEqual(
-      errorMessage.includes("Directory does not exist"),
+      txtFiles.every((f) => f.endsWith(".txt")),
       true,
-      "存在しないディレクトリでエラーが発生すること",
+      ".txtファイルのみが返されること",
     );
+
+    // 存在しないディレクトリ
+    console.log("存在しないディレクトリのテスト中...");
+    try {
+      await listFiles(path.join(testDir, "non-existent-dir"));
+      throw new Error("エラーが発生しなかった");
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      assertEqual(
+        errorMessage.includes("Directory does not exist"),
+        true,
+        "存在しないディレクトリでエラーが発生すること",
+      );
+    }
+    console.log("ファイル一覧取得テスト完了");
+  } catch (error) {
+    console.error("testListFiles内でエラーが発生:", error);
+    throw error;
   }
 }
 

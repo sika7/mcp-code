@@ -1,0 +1,15 @@
+log_path: "{{TEST_DIR}}/logs"
+excluded_files:
+  - "**/*.pem"
+  - "**/*.key"
+
+current_project: "test_project"
+projects:
+  test_project:
+    src: "{{TEST_DIR}}/src"
+    scripts:
+      build: "npm run build"
+      test: "npm run test"
+    excluded_files:
+      - "**/.env"
+      - "logs/**/*.log"
