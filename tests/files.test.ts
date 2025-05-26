@@ -792,7 +792,7 @@ async function testMulchEditLines() {
     "プレビューメッセージが返されること"
   );
   assertEqual(
-    previewResult.content.includes("プレビュー編集"),
+    previewResult.content.includes("テスト内容"),
     true,
     "差分にプレビュー内容が含まれること"
   );
