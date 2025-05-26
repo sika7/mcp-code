@@ -5,6 +5,7 @@ import path from 'path'
 import { minimatch } from 'minimatch'
 
 import { createSystemLogger } from './logs.js'
+import { allText, diffLinesWithRanges, DiffRange } from './diff.js'
 
 const log = createSystemLogger({})
 
@@ -676,6 +677,14 @@ export async function mulchEditLines(
   // 範囲の重複チェック
   validateNonOverlappingRanges(linesData)
 
+  // 差分表示ようにデータを作成
+  const diffRanges: DiffRange[] = linesData.map(item => {
+    return {
+      start: item.start,
+      end: item.end,
+    }
+  })
+
   // 後ろから処理するため降順にソート
   linesData = sortByStartLineDescending(linesData)
 
@@ -696,6 +705,9 @@ export async function mulchEditLines(
     editLinesMsg.push(`[${item.start}-${item.end}]`)
   })
 
+  const diffData = diffLinesWithRanges(lines, editLines, diffRanges)
+  const diff = allText(diffData)
+
   // プレビュー表示だったら保存しない
   if (!previewFlg) {
     // ファイルに書き戻す (元の改行コードを維持)
@@ -710,7 +722,7 @@ export async function mulchEditLines(
   })
   return {
     message,
-    content: editLines.join(eol),
+    content: diff.join(eol),
   }
 }
 

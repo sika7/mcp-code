@@ -6,7 +6,7 @@ type DiffResult = {
   rangeIndex?: number
 }
 
-type DiffRange = {
+export type DiffRange = {
   start: number
   end: number
 }
