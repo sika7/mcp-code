@@ -18,7 +18,7 @@ export function loadConfig({ configPath = CONFIG_PATH }): Config {
 
   const result = configSchema.safeParse(parsed)
   if (!result.success) {
-    const log = createSystemLogger({})
+    const log = createSystemLogger()
     log({
       logLevel: 'ERROR',
       message: '設定ファイルのスキーマ検証エラー:',

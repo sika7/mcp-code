@@ -7,7 +7,7 @@ import { minimatch } from 'minimatch'
 import { createSystemLogger } from './logs.js'
 import { allText, diffLinesWithRanges, DiffRange } from './diff.js'
 
-const log = createSystemLogger({})
+const log = createSystemLogger()
 
 // ファイル読み込みオプションの型定義
 interface ReadFileOptions {

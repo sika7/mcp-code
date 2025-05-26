@@ -14,7 +14,7 @@ async function testCreateSystemLogger() {
   const logFilePath = `${testDir}/system-test.log`;
 
   // システムロガーの作成
-  const logger = createSystemLogger({ logFilePath });
+  const logger = createSystemLogger(logFilePath);
 
   // 基本的なログ出力テスト
   logger({
@@ -68,7 +68,7 @@ async function testCreateRequestErrorLogger() {
   const logFilePath = `${testDir}/request-error-test.log`;
 
   // リクエストエラーロガーの作成
-  const requestLogger = createRequestErrorLogger({ logFilePath });
+  const requestLogger = createRequestErrorLogger(logFilePath);
 
   // 基本的なリクエストログ出力テスト
   requestLogger(
@@ -115,8 +115,8 @@ async function testCreateRequestErrorLogger() {
 
 async function testLoggerWithDefaultPath() {
   // デフォルトパスでのロガー作成テスト
-  const systemLogger = createSystemLogger({});
-  const requestLogger = createRequestErrorLogger({});
+  const systemLogger = createSystemLogger();
+  const requestLogger = createRequestErrorLogger();
 
   // ロガー関数が正常に作成されることを確認
   assertEqual(typeof systemLogger, "function", "システムロガーが関数として作成されること");
@@ -128,7 +128,7 @@ async function testLogTimestampFormat() {
   const env = await createTestEnvironment("legacy");
   const testDir = env.testDir;
   const logFilePath = `${testDir}/timestamp-test.log`;
-  const logger = createSystemLogger({ logFilePath });
+  const logger = createSystemLogger(logFilePath);
 
   const beforeTime = new Date();
   logger({ logLevel: "INFO", message: "タイムスタンプテスト" });

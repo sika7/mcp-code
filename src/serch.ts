@@ -518,7 +518,7 @@ export async function fileGrep(
     const normalizedOptions = normalizeOptions(options)
 
     if (shouldUseStreamProcessing(stats.size)) {
-      const log = createSystemLogger({})
+      const log = createSystemLogger()
       log({
         logLevel: 'ERROR',
         message: `Large file detected (${Math.round(stats.size / 1024 / 1024)}MB), using stream processing`,
@@ -569,7 +569,7 @@ export async function directoryGrep(
   try {
     validateDirectoryPath(dirPath)
     const normalizedOptions = normalizeDirectoryOptions(options)
-    const log = createSystemLogger({})
+    const log = createSystemLogger()
 
     const results: FileGrepResult[] = []
     const skippedFiles: string[] = []

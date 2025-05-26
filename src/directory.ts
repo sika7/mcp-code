@@ -2,7 +2,7 @@ import { promises as fs, rmSync } from 'fs'
 
 import { createSystemLogger } from './logs.js'
 
-const log = createSystemLogger({})
+const log = createSystemLogger()
 
 /**
  * 指定されたパスにディレクトリを作成する（存在しない場合のみ）

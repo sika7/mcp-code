@@ -57,7 +57,7 @@ export async function createMpcResponse(
         json: result.parsedData,
       }
     } catch (e) {
-      const log = createSystemLogger({})
+      const log = createSystemLogger()
       log({ logLevel: 'ERROR', message: 'パースに失敗しました。' })
     }
   }

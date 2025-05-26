@@ -32,24 +32,19 @@ type RequestLogEntry = {
   request_id: string
 }
 
-type LoggerOptions = {
-  logFilePath?: string
-}
-
-const getLogDir = () => {
-  const logDir = getLogPath(['logs'])
+function getLogDir(logKind: string) {
+  const logDir = getLogPath(['logs', logKind])
   if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   return logDir
 }
 
-const getLogFilePath = (logDir: string): string => {
+function getLogFilePath(logKind: string) {
+  const logDir = getLogDir(logKind)
+
   const date = new Date().toISOString().slice(0, 10) // "2025-05-23"
-
-  return join(logDir, `mcp-${date}.log`)
+  return join(logDir, `mcp-${logKind}-${date}.log`)
 }
-
-const defaultPath = getLogFilePath(getLogDir())
 
 // ログ出力処理
 async function writeLog(
@@ -59,10 +54,11 @@ async function writeLog(
   appendFileSync(logPath, JSON.stringify(entry) + '\n', { encoding: 'utf-8' })
 }
 
-export function createSystemLogger({
-  logFilePath = defaultPath,
-}: LoggerOptions) {
-  const logDir = dirname(logFilePath)
+const systemLogPath = getLogFilePath('system')
+const systemLogDir = getLogDir('system')
+
+export function createSystemLogger(logPath = systemLogPath) {
+  const logDir = dirname(logPath)
   if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   // ロガー関数（純粋関数 → 副作用）
@@ -81,14 +77,15 @@ export function createSystemLogger({
       message,
       data,
     }
-    writeLog(logFilePath, entry)
+    writeLog(logPath, entry)
   }
 }
 
-export function createRequestErrorLogger({
-  logFilePath = defaultPath,
-}: LoggerOptions) {
-  const logDir = dirname(logFilePath)
+const requestLogPath = getLogFilePath('request')
+const requestLogDir = getLogDir('request')
+
+export function createRequestErrorLogger(logPath = requestLogPath) {
+  const logDir = dirname(logPath)
   if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true })
 
   // ロガー関数（純粋関数 → 副作用）
@@ -107,17 +104,16 @@ export function createRequestErrorLogger({
       file,
       request_id,
     }
-    writeLog(logFilePath, entry)
+    writeLog(logPath, entry)
   }
 }
 
-const deleteOldLogs = () => {
-  const logDir = getLogPath(['logs'])
+function deleteOldLogs(logDir: string) {
   const files = readdirSync(logDir)
-  const log = createSystemLogger({})
+  const log = createSystemLogger()
 
   for (const file of files) {
-    const match = file.match(/^mcp-(\d{4}-\d{2}-\d{2})\.log$/)
+    const match = file.match(/^mcp-[a-zA-Z0-9_-]+-(\d{4}-\d{2}-\d{2})\.log$/)
     if (!match) continue
 
     const fileDate = parseISO(match[1])
@@ -135,4 +131,5 @@ const deleteOldLogs = () => {
   }
 }
 
-deleteOldLogs()
+deleteOldLogs(systemLogDir)
+deleteOldLogs(requestLogDir)
