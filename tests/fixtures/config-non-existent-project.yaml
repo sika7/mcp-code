@@ -1,9 +1,0 @@
-log_path: "{{TEST_DIR}}/logs"
-excluded_files:
-  - "**/*.pem"
-  - "**/*.key"
-
-current_project: "non_existent_project"
-projects:
-  test_project:
-    src: "{{TEST_DIR}}/src"

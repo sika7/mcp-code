@@ -1,4 +1,0 @@
-current_project: "minimal_project"
-projects:
-  minimal_project:
-    src: "{{TEST_DIR}}/src"
