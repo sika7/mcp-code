@@ -2,6 +2,7 @@
  * ディレクトリ操作モジュールのテスト
  */
 
+import { mkdirSync } from "fs";
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -14,7 +15,7 @@ import {
   runTestSuite,
   isMainModule,
 } from './test-utils'
-import { createDirectory, removeDirectory } from '../src/directory'
+import { createDirectory, generateDirectoryTree, removeDirectory } from '../src/directory'
 
 async function testCreateDirectory() {
   // テスト環境のセットアップ
@@ -141,6 +142,65 @@ async function testRemoveNonExistentDirectory() {
   )
 }
 
+async function testGenerateDirectoryTree() {
+  // テスト環境のセットアップ
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
+
+  // テストディレクトリ構造の作成
+  const subDir1 = path.join(testDir, "dir1");
+  const subDir2 = path.join(testDir, "dir2");
+  const subSubDir = path.join(subDir1, "subdir");
+
+  mkdirSync(subDir1, { recursive: true });
+  mkdirSync(subDir2, { recursive: true });
+  mkdirSync(subSubDir, { recursive: true });
+
+  // テストファイルの作成
+  await fs.writeFile(path.join(testDir, "root.txt"), "root content");
+  await fs.writeFile(path.join(subDir1, "file1.txt"), "file1 content");
+  await fs.writeFile(path.join(subDir2, "file2.txt"), "file2 content");
+  await fs.writeFile(path.join(subDir2, "file2.log"), "log content");
+  await fs.writeFile(path.join(subSubDir, "deep.txt"), "deep content");
+
+  // ディレクトリツリーの生成
+  const tree = await generateDirectoryTree(testDir);
+
+  // 検証
+  assertEqual(
+    tree.includes("root.txt"),
+    true,
+    "ルートファイルがツリーに含まれること",
+  );
+  assertEqual(
+    tree.includes("dir1"),
+    true,
+    "サブディレクトリがツリーに含まれること",
+  );
+  assertEqual(
+    tree.includes("subdir"),
+    true,
+    "ネストされたディレクトリがツリーに含まれること",
+  );
+
+  // 除外パターンを適用したツリー
+  const excludedTree = await generateDirectoryTree(testDir, {
+    exclude: ["**/*.log", "dir1/**"],
+  });
+
+  // 検証
+  assertEqual(
+    excludedTree.includes("file2.log"),
+    false,
+    "除外パターンが適用されていること",
+  );
+  assertEqual(
+    excludedTree.includes("deep.txt"),
+    false,
+    "ネストされた除外が適用されていること",
+  );
+}
+
 // メインのテスト実行関数
 export async function runDirectoryTests() {
   await runTestSuite('ディレクトリ操作テスト', [
@@ -150,6 +210,7 @@ export async function runDirectoryTests() {
     { name: 'ディレクトリ削除テスト', fn: testRemoveDirectory },
     { name: '内容があるディレクトリの削除テスト', fn: testRemoveDirectoryWithContent },
     { name: '存在しないディレクトリの削除テスト', fn: testRemoveNonExistentDirectory },
+    { name: "ディレクトリツリー生成テスト", fn: testGenerateDirectoryTree },
   ])
 }
 

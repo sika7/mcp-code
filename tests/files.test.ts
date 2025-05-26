@@ -17,7 +17,6 @@ import {
   writeTextFile,
   deleteFile,
   listFiles,
-  generateDirectoryTree,
   parseFileContent,
   fileMoveOrRename,
   mulchInsertLines,
@@ -205,65 +204,6 @@ async function testParseFileContent() {
   assertEqual(result.lineCount, 4, "行数が正しく解析されること");
   assertEqual(result.firstLine, "1行目", "最初の行が正しく解析されること");
   assertEqual(result.lastLine, "4行目", "最後の行が正しく解析されること");
-}
-
-async function testGenerateDirectoryTree() {
-  // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
-
-  // テストディレクトリ構造の作成
-  const subDir1 = path.join(testDir, "dir1");
-  const subDir2 = path.join(testDir, "dir2");
-  const subSubDir = path.join(subDir1, "subdir");
-
-  mkdirSync(subDir1, { recursive: true });
-  mkdirSync(subDir2, { recursive: true });
-  mkdirSync(subSubDir, { recursive: true });
-
-  // テストファイルの作成
-  await fs.writeFile(path.join(testDir, "root.txt"), "root content");
-  await fs.writeFile(path.join(subDir1, "file1.txt"), "file1 content");
-  await fs.writeFile(path.join(subDir2, "file2.txt"), "file2 content");
-  await fs.writeFile(path.join(subDir2, "file2.log"), "log content");
-  await fs.writeFile(path.join(subSubDir, "deep.txt"), "deep content");
-
-  // ディレクトリツリーの生成
-  const tree = await generateDirectoryTree(testDir);
-
-  // 検証
-  assertEqual(
-    tree.includes("root.txt"),
-    true,
-    "ルートファイルがツリーに含まれること",
-  );
-  assertEqual(
-    tree.includes("dir1"),
-    true,
-    "サブディレクトリがツリーに含まれること",
-  );
-  assertEqual(
-    tree.includes("subdir"),
-    true,
-    "ネストされたディレクトリがツリーに含まれること",
-  );
-
-  // 除外パターンを適用したツリー
-  const excludedTree = await generateDirectoryTree(testDir, {
-    exclude: ["**/*.log", "dir1/**"],
-  });
-
-  // 検証
-  assertEqual(
-    excludedTree.includes("file2.log"),
-    false,
-    "除外パターンが適用されていること",
-  );
-  assertEqual(
-    excludedTree.includes("deep.txt"),
-    false,
-    "ネストされた除外が適用されていること",
-  );
 }
 
 async function testFileMoveOrRename() {
@@ -892,7 +832,6 @@ export async function runFilesTests() {
     { name: "複数行挿入テスト", fn: testMulchInsertLines },
     { name: "複数行編集テスト", fn: testMulchEditLines },
     { name: "複数行削除テスト", fn: testMulchDeleteLines },
-    { name: "ディレクトリツリー生成テスト", fn: testGenerateDirectoryTree },
     { name: "ファイル移動・リネームテスト", fn: testFileMoveOrRename },
   ]);
 }
