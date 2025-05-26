@@ -11,59 +11,149 @@ type DiffRange = {
   end: number
 }
 
-// ranges は 昇順に並んでいる前提
+/**
+ * 修正されたdiff実装
+ *
+ * 設計方針：
+ * - range は oldLines の行番号を基準とする（0-based）
+ * - 各rangeで指定された oldLines の行範囲を削除対象とする
+ * - 対応する newLines の同じ位置の行を追加対象とする
+ * - 行数の変化に正しく対応する
+ *
+ * 例：
+ * oldLines = ['A', 'B', 'C', 'D']
+ * newLines = ['A', 'X', 'Y', 'Z', 'D']
+ * ranges = [{ start: 1, end: 2 }]
+ * → oldLines[1:3] ('B', 'C') を削除し、newLines[1:4] ('X', 'Y', 'Z') を追加
+ */
 export function diffLinesWithRanges(
   oldLines: string[],
   newLines: string[],
   ranges: DiffRange[],
 ): DiffResult[] {
+  if (ranges.length === 0) {
+    // rangeが空の場合は全て unchanged
+    return oldLines.map((line, i) => ({
+      line,
+      type: 'unchanged' as const,
+      oldLineNum: i + 1,
+      newLineNum: i + 1,
+    }))
+  }
+
   const result: DiffResult[] = []
+  const sortedRanges = [...ranges].sort((a, b) => a.start - b.start)
 
-  let currentLine = 0
+  let oldIndex = 0
+  let newIndex = 0
 
-  ranges.forEach((range, rangeIndex) => {
-    // unchanged
-    while (currentLine < range.start) {
+  for (let rangeIndex = 0; rangeIndex < sortedRanges.length; rangeIndex++) {
+    const range = sortedRanges[rangeIndex]
+
+    // range開始前の unchanged 行を処理
+    while (oldIndex < range.start) {
       result.push({
-        line: newLines[currentLine],
+        line: oldLines[oldIndex],
         type: 'unchanged',
-        oldLineNum: currentLine + 1,
-        newLineNum: currentLine + 1,
+        oldLineNum: oldIndex + 1,
+        newLineNum: newIndex + 1,
       })
-      currentLine++
+      oldIndex++
+      newIndex++
     }
 
-    const oldDiff = oldLines.slice(range.start, range.end + 1)
-    const newDiff = newLines.slice(range.start, range.end + 1)
+    // 削除する行数を計算
+    const oldRangeLength = range.end - range.start + 1
 
-    for (let i = 0; i < oldDiff.length; i++) {
-      result.push({
-        line: oldDiff[i],
-        type: 'removed',
-        oldLineNum: range.start + i + 1,
-        rangeIndex,
-      })
+    // 新しいファイルで対応する範囲を計算
+    // 基本的な仮定: 変更範囲の開始位置は同じ、終了位置は動的に決定
+    const newRangeStart = newIndex
+
+    // 次のunchanged部分を見つけて、新しい範囲の長さを決定
+    let newRangeLength = 0
+    const nextOldIndex = range.end + 1
+
+    if (nextOldIndex < oldLines.length) {
+      // 次のunchanged行を見つける
+      const nextUnchangedLine = oldLines[nextOldIndex]
+
+      // newLinesで同じ行を探す
+      let foundIndex = -1
+      for (let i = newIndex; i < newLines.length; i++) {
+        if (newLines[i] === nextUnchangedLine) {
+          foundIndex = i
+          break
+        }
+      }
+
+      if (foundIndex !== -1) {
+        newRangeLength = foundIndex - newIndex
+      } else {
+        // 見つからない場合は残り全部
+        newRangeLength = newLines.length - newIndex
+      }
+    } else {
+      // oldLinesの最後の範囲の場合
+      newRangeLength = newLines.length - newIndex
     }
-    for (let i = 0; i < newDiff.length; i++) {
-      result.push({
-        line: newDiff[i],
-        type: 'added',
-        newLineNum: range.start + i + 1,
-        rangeIndex,
-      })
+
+    // 削除される行を記録
+    for (let i = 0; i < oldRangeLength; i++) {
+      if (oldIndex + i < oldLines.length) {
+        result.push({
+          line: oldLines[oldIndex + i],
+          type: 'removed',
+          oldLineNum: oldIndex + i + 1,
+          rangeIndex,
+        })
+      }
     }
 
-    currentLine = range.end + 1
-  })
+    // 追加される行を記録
+    for (let i = 0; i < newRangeLength; i++) {
+      if (newIndex + i < newLines.length) {
+        result.push({
+          line: newLines[newIndex + i],
+          type: 'added',
+          newLineNum: newIndex + i + 1,
+          rangeIndex,
+        })
+      }
+    }
 
-  while (currentLine < newLines.length) {
+    oldIndex += oldRangeLength
+    newIndex += newRangeLength
+  }
+
+  // 残りの unchanged 行を処理
+  while (oldIndex < oldLines.length && newIndex < newLines.length) {
     result.push({
-      line: newLines[currentLine],
+      line: oldLines[oldIndex],
       type: 'unchanged',
-      oldLineNum: currentLine + 1,
-      newLineNum: currentLine + 1,
+      oldLineNum: oldIndex + 1,
+      newLineNum: newIndex + 1,
     })
-    currentLine++
+    oldIndex++
+    newIndex++
+  }
+
+  // 残りの行（どちらかのファイルが長い場合）
+  while (oldIndex < oldLines.length) {
+    result.push({
+      line: oldLines[oldIndex],
+      type: 'removed',
+      oldLineNum: oldIndex + 1,
+    })
+    oldIndex++
+  }
+
+  while (newIndex < newLines.length) {
+    result.push({
+      line: newLines[newIndex],
+      type: 'added',
+      newLineNum: newIndex + 1,
+    })
+    newIndex++
   }
 
   return result
