@@ -551,12 +551,13 @@ try {
           content: z.string().describe('編集する内容.'),
         }),
       ),
+      preview: z.boolean().default(true).describe('プレビュー表示する？'),
       requestId: z
         .string()
         .default(generateRequestId())
         .describe('リクエストID'),
     },
-    async ({ filePath, editlines, requestId }) => {
+    async ({ filePath, editlines, preview, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
       // プロジェクトルートのパスに丸める
@@ -570,10 +571,25 @@ try {
       }
 
       try {
-        const message = await mulchEditLines(safeFilePath, editlines)
+        const { message, content } = await mulchEditLines(
+          safeFilePath,
+          editlines,
+          preview,
+        )
         const result = convertToRelativePaths(message, currentProject.src)
         return await createMpcResponse(
-          `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
+          [
+            {
+              type: 'text',
+              text: `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
+            },
+            {
+              type: 'text',
+              text: content,
+            },
+          ],
+          {},
+          finalRequestId,
         )
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)

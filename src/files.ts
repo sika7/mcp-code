@@ -663,6 +663,7 @@ function mulchEditLineToData(lines: MulchEditLines[]) {
 export async function mulchEditLines(
   filePath: string,
   editlines: MulchEditLines[],
+  previewFlg: boolean = true,
 ) {
   validateLineRanges(editlines)
 
@@ -695,15 +696,21 @@ export async function mulchEditLines(
     editLinesMsg.push(`[${item.start}-${item.end}]`)
   })
 
-  // ファイルに書き戻す (元の改行コードを維持)
-  await writeTextFile(filePath, editLines.join(eol))
+  // プレビュー表示だったら保存しない
+  if (!previewFlg) {
+    // ファイルに書き戻す (元の改行コードを維持)
+    await writeTextFile(filePath, editLines.join(eol))
+  }
 
   const message = `Successfully Edit lines: ${editLinesMsg.join(' ')} in ${filePath}`
   log({
     logLevel: 'INFO',
     message: message,
   })
-  return message
+  return {
+    message,
+    content: editLines.join(eol),
+  }
 }
 
 export async function mulchDeleteLines(
