@@ -2,10 +2,11 @@
  * ログ機能モジュールのテスト
  */
 
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "fs";
+import { join } from "path";
 
 import { assertEqual, isMainModule, createTestEnvironment, runTestSuite } from './test-utils';
-import { createSystemLogger, createRequestErrorLogger } from '../src/logs';
+import { createSystemLogger, createRequestErrorLogger, deleteOldLogs } from '../src/logs';
 
 async function testCreateSystemLogger() {
   // テスト環境のセットアップ
@@ -155,13 +156,137 @@ async function testLogTimestampFormat() {
   );
 }
 
+async function testDeleteOldLogs() {
+  // テスト環境のセットアップ
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
+  const logsDir = join(testDir, "test-logs");
+  
+  // ログディレクトリを作成
+  mkdirSync(logsDir, { recursive: true });
+  
+  // 現在の日付を取得
+  const now = new Date();
+  
+  // テスト用のログファイルを作成
+  // 1. 新しいログファイル（5日前）
+  const recentDate = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+  const recentFile = `mcp-system-${recentDate.toISOString().slice(0, 10)}.log`;
+  writeFileSync(join(logsDir, recentFile), "recent log content");
+  
+  // 2. 古いログファイル（35日前）- 削除対象
+  const oldDate = new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
+  const oldFile = `mcp-request-${oldDate.toISOString().slice(0, 10)}.log`;
+  writeFileSync(join(logsDir, oldFile), "old log content");
+  
+  // 3. とても古いログファイル（50日前）- 削除対象
+  const veryOldDate = new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000);
+  const veryOldFile = `mcp-system-${veryOldDate.toISOString().slice(0, 10)}.log`;
+  writeFileSync(join(logsDir, veryOldFile), "very old log content");
+  
+  // 4. パターンにマッチしないファイル（削除されない）
+  const nonLogFile = "not-a-log-file.txt";
+  writeFileSync(join(logsDir, nonLogFile), "not a log file");
+  
+  // 5. 不正な日付形式のファイル（削除されない）
+  const invalidDateFile = "mcp-system-invalid-date.log";
+  writeFileSync(join(logsDir, invalidDateFile), "invalid date format");
+  
+  // 削除前の状態を確認
+  const filesBefore = readdirSync(logsDir);
+  assertEqual(filesBefore.length, 5, "5つのファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, recentFile)), true, "新しいログファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, oldFile)), true, "古いログファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, veryOldFile)), true, "とても古いログファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, nonLogFile)), true, "非ログファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, invalidDateFile)), true, "不正な日付形式のファイルが存在すること");
+  
+  // deleteOldLogsを実行
+  deleteOldLogs(logsDir);
+  
+  // 削除後の状態を確認
+  const filesAfter = readdirSync(logsDir);
+  
+  // 期待される結果:
+  // - recentFile: 残る（5日前なので30日以内）
+  // - oldFile: 削除される（35日前なので30日以上）
+  // - veryOldFile: 削除される（50日前なので30日以上）
+  // - nonLogFile: 残る（ログファイルのパターンにマッチしない）
+  // - invalidDateFile: 残る（日付形式が不正）
+  
+  assertEqual(filesAfter.length, 3, "3つのファイルが残ること");
+  assertEqual(existsSync(join(logsDir, recentFile)), true, "新しいログファイルは残ること");
+  assertEqual(existsSync(join(logsDir, oldFile)), false, "古いログファイルは削除されること");
+  assertEqual(existsSync(join(logsDir, veryOldFile)), false, "とても古いログファイルは削除されること");
+  assertEqual(existsSync(join(logsDir, nonLogFile)), true, "非ログファイルは残ること");
+  assertEqual(existsSync(join(logsDir, invalidDateFile)), true, "不正な日付形式のファイルは残ること");
+  
+  // 残ったファイルの内容も確認
+  const recentContent = readFileSync(join(logsDir, recentFile), "utf-8");
+  assertEqual(recentContent, "recent log content", "新しいログファイルの内容が保持されること");
+  
+  const nonLogContent = readFileSync(join(logsDir, nonLogFile), "utf-8");
+  assertEqual(nonLogContent, "not a log file", "非ログファイルの内容が保持されること");
+  
+  const invalidDateContent = readFileSync(join(logsDir, invalidDateFile), "utf-8");
+  assertEqual(invalidDateContent, "invalid date format", "不正な日付形式のファイルの内容が保持されること");
+}
+
+async function testDeleteOldLogsEmptyDirectory() {
+  // 空のディレクトリでのテスト
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
+  const emptyLogsDir = join(testDir, "empty-logs");
+  
+  mkdirSync(emptyLogsDir, { recursive: true });
+  
+  // 空のディレクトリに対してdeleteOldLogsを実行
+  // エラーが発生しないことを確認
+  deleteOldLogs(emptyLogsDir);
+  
+  // ディレクトリが依然として存在し、空であることを確認
+  assertEqual(existsSync(emptyLogsDir), true, "空のディレクトリが残ること");
+  const files = readdirSync(emptyLogsDir);
+  assertEqual(files.length, 0, "ディレクトリが空のままであること");
+}
+
+async function testDeleteOldLogsBoundaryDate() {
+  // 境界値テスト（ちょうど30日前）
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
+  const logsDir = join(testDir, "boundary-logs");
+  
+  mkdirSync(logsDir, { recursive: true });
+  
+  const now = new Date();
+  
+  // ちょうど30日前のファイル（削除される）
+  const boundaryDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const boundaryFile = `mcp-system-${boundaryDate.toISOString().slice(0, 10)}.log`;
+  writeFileSync(join(logsDir, boundaryFile), "boundary log content");
+  
+  // 29日前のファイル（残る）
+  const withinLimitDate = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+  const withinLimitFile = `mcp-request-${withinLimitDate.toISOString().slice(0, 10)}.log`;
+  writeFileSync(join(logsDir, withinLimitFile), "within limit log content");
+  
+  deleteOldLogs(logsDir);
+  
+  // 30日前のファイルは削除され、29日前のファイルは残ることを確認
+  assertEqual(existsSync(join(logsDir, boundaryFile)), false, "ちょうど30日前のファイルは削除されること");
+  assertEqual(existsSync(join(logsDir, withinLimitFile)), true, "29日前のファイルは残ること");
+}
+
 // メインのテスト実行関数
 export async function runLogsTests() {
-  await runTestSuite("Legacy Test Suite", [
+  await runTestSuite("Logs Test Suite", [
     { name: 'システムロガー作成テスト', fn: testCreateSystemLogger },
     { name: 'リクエストエラーロガー作成テスト', fn: testCreateRequestErrorLogger },
     { name: 'デフォルトパスロガーテスト', fn: testLoggerWithDefaultPath },
     { name: 'ログタイムスタンプ形式テスト', fn: testLogTimestampFormat },
+    { name: '古いログ削除テスト', fn: testDeleteOldLogs },
+    { name: '空ディレクトリでの古いログ削除テスト', fn: testDeleteOldLogsEmptyDirectory },
+    { name: '境界値での古いログ削除テスト', fn: testDeleteOldLogsBoundaryDate },
   ]);
 }
 

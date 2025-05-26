@@ -108,7 +108,7 @@ export function createRequestErrorLogger(logPath = requestLogPath) {
   }
 }
 
-function deleteOldLogs(logDir: string) {
+export function deleteOldLogs(logDir: string) {
   const files = readdirSync(logDir)
   const log = createSystemLogger()
 
