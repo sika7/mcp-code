@@ -34,7 +34,8 @@ MCP-Codeは、プログラミング用途に特化したAPIフレームワーク
 
 ### ロギング
 
-- システムログとリクエストログの出力（`~/.local/state/mcp-code/logs/mcp-{YYYY-MM-DD}.log`）
+- システムログの出力（`~/.local/state/mcp-code/logs/system/mcp-system-{YYYY-MM-DD}.log`）
+- リクエストログの出力（`~/.local/state/mcp-code/logs/request/mcp-request-{YYYY-MM-DD}.log`）
 - 日付ごとのログファイル管理
 - 古いログファイルの自動クリーンアップ（デフォルト30日）
 
