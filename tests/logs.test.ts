@@ -4,7 +4,7 @@
 
 import { existsSync, readFileSync } from "fs";
 
-import { assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
+import { assertEqual, isMainModule, createTestEnvironment, runTestSuite } from './test-utils';
 import { createSystemLogger, createRequestErrorLogger } from '../src/logs';
 
 async function testCreateSystemLogger() {
@@ -157,7 +157,7 @@ async function testLogTimestampFormat() {
 
 // メインのテスト実行関数
 export async function runLogsTests() {
-  await runTests([
+  await runTestSuite("Legacy Test Suite", [
     { name: 'システムロガー作成テスト', fn: testCreateSystemLogger },
     { name: 'リクエストエラーロガー作成テスト', fn: testCreateRequestErrorLogger },
     { name: 'デフォルトパスロガーテスト', fn: testLoggerWithDefaultPath },

@@ -364,17 +364,3 @@ export function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// =============================================================================
-// 後方互換性のための旧API
-// =============================================================================
-
-/**
- * @deprecated runTestSuite を使用してください
- */
-export async function runTests(
-  tests: Array<{ name: string; fn: () => Promise<void> }>
-): Promise<{ passed: number; failed: number }> {
-  console.warn("runTests is deprecated. Use runTestSuite instead.");
-  const result = await runTestSuite("Legacy Test Suite", tests);
-  return { passed: result.passed, failed: result.failed };
-}

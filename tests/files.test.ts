@@ -8,9 +8,9 @@ import path from "path";
 
 import {
   assertEqual,
-  runTests,
   isMainModule,
   createTestEnvironment,
+  runTestSuite,
 } from "./test-utils";
 import {
   readTextFile,
@@ -611,7 +611,7 @@ async function testFileMoveOrRename() {
 
 // メインのテスト実行関数
 export async function runFilesTests() {
-  await runTests([
+  await runTestSuite("Legacy Test Suite", [
     { name: "ファイル読み込みテスト", fn: testReadTextFile },
     { name: "ファイル書き込みテスト", fn: testWriteTextFile },
     { name: "ファイル削除テスト", fn: testDeleteFile },

@@ -7,9 +7,9 @@ import path from "path";
 
 import {
   assertEqual,
-  runTests,
   isMainModule,
   createTestEnvironment,
+  runTestSuite,
 } from "./test-utils";
 import { runScript } from "../src/script";
 
@@ -85,7 +85,7 @@ async function testRunScript() {
 
 // メインのテスト実行関数
 export async function runScriptTests() {
-  await runTests([{ name: "スクリプト実行テスト", fn: testRunScript }]);
+  await runTestSuite("Legacy Test Suite", [{ name: "スクリプト実行テスト", fn: testRunScript }]);
 }
 
 // 単体で実行する場合

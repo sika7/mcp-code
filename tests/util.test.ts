@@ -6,7 +6,7 @@ import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { assertEqual, runTests, isMainModule } from './test-utils';
+import { assertEqual, isMainModule, runTestSuite } from './test-utils';
 import {
   isExcluded,
   generateRequestId,
@@ -239,7 +239,7 @@ async function testConvertToRelativePaths() {
 
 // メインのテスト実行関数
 export async function runUtilTests() {
-  await runTests([
+  await runTestSuite("Legacy Test Suite", [
     { name: 'ファイル除外パターンテスト', fn: testIsExcluded },
     { name: 'リクエストID生成テスト', fn: testGenerateRequestId },
     { name: 'プロジェクトパス正規化テスト', fn: testNormalizeToProjectRoot },

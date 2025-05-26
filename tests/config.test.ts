@@ -2,7 +2,7 @@
  * 設定モジュールのテスト（シンプル版）
  */
 
-import { assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
+import { assertEqual, isMainModule, createTestEnvironment, runTestSuite } from './test-utils';
 import { loadConfig } from '../src/config';
 
 async function testLoadValidConfig() {
@@ -94,7 +94,7 @@ async function testNonExistentConfig() {
 
 // メインのテスト実行関数
 export async function runConfigTests() {
-  await runTests([
+  await runTestSuite("Legacy Test Suite", [
     { name: '有効な設定ファイルの読み込みテスト', fn: testLoadValidConfig },
     { name: '無効な設定ファイルの読み込みテスト', fn: testInvalidConfig },
     { name: '存在しない設定ファイルの読み込みテスト', fn: testNonExistentConfig },
