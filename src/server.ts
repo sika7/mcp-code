@@ -32,7 +32,11 @@ import {
   writeTextFile,
 } from './files.js'
 import { createRequestErrorLogger, createSystemLogger } from './logs.js'
-import { createMpcErrorResponse, createMpcResponse } from './mpc.js'
+import {
+  arrayToTextContent,
+  createMpcErrorResponse,
+  createMpcResponse,
+} from './mpc.js'
 import { runScript } from './script.js'
 import {
   DirectoryGrepOptionsSchema,
@@ -551,7 +555,10 @@ try {
           content: z.string().describe('編集する内容.'),
         }),
       ),
-      preview: z.boolean().default(true).describe('プレビュー表示する？'),
+      preview: z
+        .boolean()
+        .default(true)
+        .describe('プレビュー表示する？プレビュー表示は保存されません。'),
       requestId: z
         .string()
         .default(generateRequestId())
@@ -577,20 +584,11 @@ try {
           preview,
         )
         const result = convertToRelativePaths(message, currentProject.src)
-        return await createMpcResponse(
-          [
-            {
-              type: 'text',
-              text: `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
-            },
-            {
-              type: 'text',
-              text: content,
-            },
-          ],
-          {},
-          finalRequestId,
-        )
+        const msg = preview
+          ? '保存するには preview: false で再度、実行してください'
+          : 'もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。'
+        const textContent = arrayToTextContent([`${result} ${msg}`, content])
+        return await createMpcResponse(textContent, {}, finalRequestId)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
         requestLog(500, errorMsg, currentProjectName, '-', finalRequestId)

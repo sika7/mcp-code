@@ -23,6 +23,15 @@ export enum MCPErrorCode {
   DATABASE_ERROR = 'database_error',
 }
 
+export function arrayToTextContent(array: string[]): TextContent[] {
+  return array.map(i => {
+    return {
+      type: 'text',
+      text: i,
+    }
+  })
+}
+
 export async function createMpcResponse(
   text: string | TextContent[],
   metadata?: Record<string, any>,

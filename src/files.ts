@@ -702,7 +702,8 @@ export async function mulchEditLines(
     await writeTextFile(filePath, editLines.join(eol))
   }
 
-  const message = `Successfully Edit lines: ${editLinesMsg.join(' ')} in ${filePath}`
+  const status = previewFlg ? 'Preview' : 'Successfully'
+  const message = `${status} Edit lines: ${editLinesMsg.join(' ')} in ${filePath}`
   log({
     logLevel: 'INFO',
     message: message,
