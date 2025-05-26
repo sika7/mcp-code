@@ -9,6 +9,7 @@ import { runDirectoryTests } from './directory.test.js';
 import { runFilesTests } from './files.test.js';
 import { runLogsTests } from './logs.test.js';
 import { runScriptTests } from './script.test.js';
+import { runSearchTests } from './search.test.js';
 import { isMainModule } from './test-utils.js';
 import { runUtilTests } from './util.test.js';
 
@@ -26,6 +27,7 @@ const testGroups: TestGroup[] = [
   { name: 'スクリプト実行モジュールテスト', runFn: runScriptTests },
   { name: 'ディレクトリ操作モジュールテスト', runFn: runDirectoryTests },
   { name: 'ログ機能モジュールテスト', runFn: runLogsTests },
+  { name: '検索機能モジュールテスト', runFn: runSearchTests },
 ];
 
 /**
