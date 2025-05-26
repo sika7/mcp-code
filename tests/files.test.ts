@@ -17,7 +17,6 @@ import {
   writeTextFile,
   deleteFile,
   listFiles,
-  parseFileContent,
   fileMoveOrRename,
   mulchInsertLines,
   mulchEditLines,
@@ -191,19 +190,6 @@ async function testListFiles() {
     console.error("testListFiles内でエラーが発生:", error);
     throw error;
   }
-}
-
-async function testParseFileContent() {
-  // テスト内容の準備
-  const content = "1行目\n2行目\n3行目\n4行目";
-
-  // ファイル内容の解析
-  const result = parseFileContent(content);
-
-  // 検証
-  assertEqual(result.lineCount, 4, "行数が正しく解析されること");
-  assertEqual(result.firstLine, "1行目", "最初の行が正しく解析されること");
-  assertEqual(result.lastLine, "4行目", "最後の行が正しく解析されること");
 }
 
 async function testFileMoveOrRename() {
@@ -828,7 +814,6 @@ export async function runFilesTests() {
     { name: "ファイル書き込みテスト", fn: testWriteTextFile },
     { name: "ファイル削除テスト", fn: testDeleteFile },
     { name: "ファイル一覧取得テスト", fn: testListFiles },
-    { name: "ファイル内容解析テスト", fn: testParseFileContent },
     { name: "複数行挿入テスト", fn: testMulchInsertLines },
     { name: "複数行編集テスト", fn: testMulchEditLines },
     { name: "複数行削除テスト", fn: testMulchDeleteLines },

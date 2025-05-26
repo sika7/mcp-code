@@ -627,19 +627,3 @@ export async function mulchDeleteLines(
   return message
 }
 
-/**
- * テキストファイルの内容を解析する関数（例）
- * @param content - ファイルの内容
- * @returns 解析結果
- */
-export function parseFileContent(content: string) {
-  // ファイルの種類に応じた解析処理を実装
-  // この例ではシンプルに行数をカウント
-  const lines = content.split('\n')
-  return {
-    lineCount: lines.length,
-    firstLine: lines[0],
-    lastLine: lines[lines.length - 1],
-  }
-}
-
