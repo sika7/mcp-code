@@ -7,16 +7,17 @@ import fs from "fs/promises";
 import path from "path";
 
 import {
-  setupTestDirectory,
   assertEqual,
   runTests,
   isMainModule,
+  createTestEnvironment,
 } from "./test-utils";
 import { runScript } from "../src/script";
 
 async function testRunScript() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テスト用のスクリプトファイル作成
   const scriptDir = path.join(testDir, "scripts");

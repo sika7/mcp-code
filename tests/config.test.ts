@@ -2,12 +2,13 @@
  * 設定モジュールのテスト（シンプル版）
  */
 
-import { setupTestDirectory, createTestConfig, assertEqual, runTests, isMainModule } from './test-utils';
+import { createTestConfig, assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
 import { loadConfig } from '../src/config';
 
 async function testLoadValidConfig() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   
   // 有効な設定ファイルを作成
   const validConfig = `
@@ -42,7 +43,8 @@ projects:
 
 async function testInvalidConfig() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   
   // 無効な設定ファイル（必須項目が欠けている）
   const invalidConfig = `

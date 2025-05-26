@@ -4,12 +4,13 @@
 
 import { existsSync, readFileSync } from "fs";
 
-import { setupTestDirectory, assertEqual, runTests, isMainModule } from './test-utils';
+import { assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
 import { createSystemLogger, createRequestErrorLogger } from '../src/logs';
 
 async function testCreateSystemLogger() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   const logFilePath = `${testDir}/system-test.log`;
 
   // システムロガーの作成
@@ -62,7 +63,8 @@ async function testCreateSystemLogger() {
 
 async function testCreateRequestErrorLogger() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   const logFilePath = `${testDir}/request-error-test.log`;
 
   // リクエストエラーロガーの作成
@@ -123,7 +125,8 @@ async function testLoggerWithDefaultPath() {
 
 async function testLogTimestampFormat() {
   // タイムスタンプ形式のテスト
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   const logFilePath = `${testDir}/timestamp-test.log`;
   const logger = createSystemLogger({ logFilePath });
 

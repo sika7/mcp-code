@@ -7,11 +7,11 @@ import fs from "fs/promises";
 import path from "path";
 
 import {
-  setupTestDirectory,
   createTestFile,
   assertEqual,
   runTests,
   isMainModule,
+  createTestEnvironment,
 } from "./test-utils";
 import {
   readTextFile,
@@ -27,7 +27,8 @@ import {
 
 async function testReadTextFile() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テストファイルの作成
   const content = "これはテストファイルの内容です。\n2行目の内容です。";
@@ -55,7 +56,8 @@ async function testReadTextFile() {
 
 async function testWriteTextFile() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
   const filePath = path.join(testDir, "write-test.txt");
 
   // ファイルの書き込み
@@ -93,7 +95,8 @@ async function testWriteTextFile() {
 
 async function testDeleteFile() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テストファイルの作成
   const filePath = await createTestFile(
@@ -126,7 +129,8 @@ async function testDeleteFile() {
 
 async function testListFiles() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   console.log(`テストディレクトリ: ${testDir}`);
 
@@ -207,7 +211,8 @@ async function testParseFileContent() {
 
 async function testSafeEditLines() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テストファイル（Unix改行）の作成
   const unixContent = "1行目\n2行目\n3行目\n4行目\n5行目";
@@ -285,7 +290,8 @@ async function testSafeEditLines() {
 
 async function testSafeDeleteLines() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テストファイル（Unix改行）の作成
   const unixContent = "1行目\n2行目\n3行目\n4行目\n5行目";
@@ -349,7 +355,8 @@ async function testSafeDeleteLines() {
 
 async function testGenerateDirectoryTree() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // テストディレクトリ構造の作成
   const subDir1 = path.join(testDir, "dir1");
@@ -407,7 +414,8 @@ async function testGenerateDirectoryTree() {
 
 async function testFileMoveOrRename() {
   // テスト環境のセットアップ
-  const testDir = await setupTestDirectory();
+  const env = await createTestEnvironment("legacy");
+  const testDir = env.testDir;
 
   // === テスト1: ファイルのリネーム ===
   const originalFileName = "original-file.txt";
