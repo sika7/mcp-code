@@ -7,6 +7,7 @@
 import { runConfigTests } from './config.test.js';
 import { runDirectoryTests } from './directory.test.js';
 import { runFilesTests } from './files.test.js';
+import { runLogsTests } from './logs.test.js';
 import { runScriptTests } from './script.test.js';
 import { isMainModule } from './test-utils.js';
 import { runUtilTests } from './util.test.js';
@@ -24,6 +25,7 @@ const testGroups: TestGroup[] = [
   { name: 'ユーティリティモジュールテスト', runFn: runUtilTests },
   { name: 'スクリプト実行モジュールテスト', runFn: runScriptTests },
   { name: 'ディレクトリ操作モジュールテスト', runFn: runDirectoryTests },
+  { name: 'ログ機能モジュールテスト', runFn: runLogsTests },
 ];
 
 /**
