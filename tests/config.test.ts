@@ -2,13 +2,12 @@
  * 設定モジュールのテスト（シンプル版）
  */
 
-import { createTestConfig, assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
+import { assertEqual, runTests, isMainModule, createTestEnvironment } from './test-utils';
 import { loadConfig } from '../src/config';
 
 async function testLoadValidConfig() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir, createConfig } = await createTestEnvironment("legacy");
   
   // 有効な設定ファイルを作成
   const validConfig = `
@@ -29,7 +28,7 @@ projects:
       - "logs/**/*.log"
   `;
   
-  const configPath = await createTestConfig('valid-config.yaml', validConfig);
+  const configPath = await createConfig('valid-config.yaml', validConfig);
   
   // 設定を読み込む（直接パスを渡す）
   const config = loadConfig({ configPath });
@@ -43,8 +42,7 @@ projects:
 
 async function testInvalidConfig() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir, createConfig } = await createTestEnvironment("legacy");
   
   // 無効な設定ファイル（必須項目が欠けている）
   const invalidConfig = `
@@ -59,7 +57,7 @@ projects:
     src: "${testDir}/src"
   `;
   
-  const configPath = await createTestConfig('invalid-config.yaml', invalidConfig);
+  const configPath = await createConfig('invalid-config.yaml', invalidConfig);
   
   // エラーが発生することを検証
   try {

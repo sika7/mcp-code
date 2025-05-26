@@ -369,24 +369,6 @@ export function delay(ms: number): Promise<void> {
 // =============================================================================
 
 /**
- * @deprecated TestEnvironment.createFile を使用してください
- */
-export async function createTestFile(fileName: string, content: string): Promise<string> {
-  console.warn("createTestFile is deprecated. Use TestEnvironment.createFile instead.");
-  const env = await createTestEnvironment("legacy");
-  return env.createFile(fileName, content);
-}
-
-/**
- * @deprecated TestEnvironment.createConfig を使用してください
- */
-export async function createTestConfig(configName: string, configContent: string): Promise<string> {
-  console.warn("createTestConfig is deprecated. Use TestEnvironment.createConfig instead.");
-  const env = await createTestEnvironment("legacy");
-  return env.createConfig(configName, configContent);
-}
-
-/**
  * @deprecated runTestSuite を使用してください
  */
 export async function runTests(

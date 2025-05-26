@@ -7,7 +7,6 @@ import fs from "fs/promises";
 import path from "path";
 
 import {
-  createTestFile,
   assertEqual,
   runTests,
   isMainModule,
@@ -27,12 +26,11 @@ import {
 
 async function testReadTextFile() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir , createFile } = await createTestEnvironment("legacy");
 
   // テストファイルの作成
   const content = "これはテストファイルの内容です。\n2行目の内容です。";
-  const filePath = await createTestFile("read-test.txt", content);
+  const filePath = await createFile("read-test.txt", content);
 
   // ファイルの読み込み
   const { eol, lines } = await readTextFile(filePath);
@@ -56,8 +54,7 @@ async function testReadTextFile() {
 
 async function testWriteTextFile() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir } = await createTestEnvironment("legacy");
   const filePath = path.join(testDir, "write-test.txt");
 
   // ファイルの書き込み
@@ -95,11 +92,10 @@ async function testWriteTextFile() {
 
 async function testDeleteFile() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir, createFile } = await createTestEnvironment("legacy");
 
   // テストファイルの作成
-  const filePath = await createTestFile(
+  const filePath = await createFile(
     "delete-test.txt",
     "delete test content",
   );
@@ -211,19 +207,18 @@ async function testParseFileContent() {
 
 async function testSafeEditLines() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { createFile } = await createTestEnvironment("legacy");
 
   // テストファイル（Unix改行）の作成
   const unixContent = "1行目\n2行目\n3行目\n4行目\n5行目";
-  const unixFilePath = await createTestFile(
+  const unixFilePath = await createFile(
     "unix-line-endings.txt",
     unixContent,
   );
 
   // テストファイル（Windows改行）の作成
   const windowsContent = "1行目\r\n2行目\r\n3行目\r\n4行目\r\n5行目";
-  const windowsFilePath = await createTestFile(
+  const windowsFilePath = await createFile(
     "windows-line-endings.txt",
     windowsContent,
   );
@@ -290,16 +285,15 @@ async function testSafeEditLines() {
 
 async function testSafeDeleteLines() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { createFile } = await createTestEnvironment("legacy");
 
   // テストファイル（Unix改行）の作成
   const unixContent = "1行目\n2行目\n3行目\n4行目\n5行目";
-  const unixFilePath = await createTestFile("unix-delete.txt", unixContent);
+  const unixFilePath = await createFile("unix-delete.txt", unixContent);
 
   // テストファイル（Windows改行）の作成
   const windowsContent = "1行目\r\n2行目\r\n3行目\r\n4行目\r\n5行目";
-  const windowsFilePath = await createTestFile(
+  const windowsFilePath = await createFile(
     "windows-delete.txt",
     windowsContent,
   );
@@ -414,8 +408,7 @@ async function testGenerateDirectoryTree() {
 
 async function testFileMoveOrRename() {
   // テスト環境のセットアップ
-  const env = await createTestEnvironment("legacy");
-  const testDir = env.testDir;
+  const { testDir, createFile } = await createTestEnvironment("legacy");
 
   // === テスト1: ファイルのリネーム ===
   const originalFileName = "original-file.txt";
@@ -423,7 +416,7 @@ async function testFileMoveOrRename() {
   const content = "これはファイル移動テストの内容です。\n2行目の内容です。";
 
   // テストファイルの作成
-  const originalFilePath = await createTestFile(originalFileName, content);
+  const originalFilePath = await createFile(originalFileName, content);
   const renamedFilePath = path.join(testDir, renamedFileName);
 
   // ファイルのリネーム
@@ -463,7 +456,7 @@ async function testFileMoveOrRename() {
   await fs.mkdir(subDirPath, { recursive: true });
 
   // テストファイルの作成
-  const moveTestFilePath = await createTestFile(moveTestFile, moveTestContent);
+  const moveTestFilePath = await createFile(moveTestFile, moveTestContent);
   const movedFilePath = path.join(subDirPath, "moved-file.txt");
 
   // ファイルの移動
@@ -547,8 +540,8 @@ async function testFileMoveOrRename() {
   }
 
   // === テスト5: 移動先が既に存在する場合（エラーケース） ===
-  const existingFile1 = await createTestFile("existing1.txt", "content1");
-  const existingFile2 = await createTestFile("existing2.txt", "content2");
+  const existingFile1 = await createFile("existing1.txt", "content1");
+  const existingFile2 = await createFile("existing2.txt", "content2");
 
   try {
     await fileMoveOrRename(existingFile1, existingFile2);
@@ -575,7 +568,7 @@ async function testFileMoveOrRename() {
   );
 
   // === テスト6: ネストされたディレクトリへの移動（自動ディレクトリ作成） ===
-  const nestedTestFile = await createTestFile(
+  const nestedTestFile = await createFile(
     "nested-test.txt",
     "nested content",
   );
