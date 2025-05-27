@@ -5,6 +5,7 @@
  */
 
 import { runConfigTests } from './config.test.js';
+import { runDataParseTests } from './data-parse.test.js';
 import { runDiffTests } from './diff.test.js';
 import { runDirectoryTests } from './directory.test.js';
 import { runFilesTests } from './files.test.js';
@@ -23,6 +24,7 @@ type TestGroup = {
 // 全テストグループ
 const testGroups: TestGroup[] = [
   { name: '設定モジュールテスト', runFn: runConfigTests },
+  { name: 'データパーステスト', runFn: runDataParseTests },
   { name: '差分計算モジュールテスト', runFn: runDiffTests },
   { name: 'ファイル操作モジュールテスト', runFn: runFilesTests },
   { name: 'ユーティリティモジュールテスト', runFn: runUtilTests },

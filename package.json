@@ -17,6 +17,7 @@
     "test": "npx tsx tests/index.ts",
     "test:config": "npx tsx tests/config.test.ts",
     "test:diff": "npx tsx tests/diff.test.ts",
+    "test:data_parse": "npx tsx tests/data-parse.test.ts",
     "test:logs": "npx tsx tests/logs.test.ts",
     "test:files": "npx tsx tests/files.test.ts",
     "test:util": "npx tsx tests/util.test.ts",
