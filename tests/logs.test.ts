@@ -277,6 +277,75 @@ async function testDeleteOldLogsBoundaryDate() {
   assertEqual(existsSync(join(logsDir, withinLimitFile)), true, "29日前のファイルは残ること");
 }
 
+async function testDateConsistency() {
+  // 日付と時刻の一貫性をテスト
+  const env = await createTestEnvironment("date-consistency");
+  const testDir = env.testDir;
+  const logsDir = join(testDir, "consistency-logs");
+  
+  mkdirSync(logsDir, { recursive: true });
+  
+  // 現在の日付でログファイルを作成
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayDate = `${year}-${month}-${day}`;
+  
+  const todayFile = `mcp-system-${todayDate}.log`;
+  writeFileSync(join(logsDir, todayFile), "today's log content");
+  
+  // 明日の日付でログファイルを作成（テスト用）
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrowYear = tomorrow.getFullYear();
+  const tomorrowMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const tomorrowDay = String(tomorrow.getDate()).padStart(2, '0');
+  const tomorrowDate = `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
+  
+  const tomorrowFile = `mcp-request-${tomorrowDate}.log`;
+  writeFileSync(join(logsDir, tomorrowFile), "tomorrow's log content");
+  
+  // 31日前の古いファイルを作成（削除対象）
+  const oldDate = new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000);
+  const oldYear = oldDate.getFullYear();
+  const oldMonth = String(oldDate.getMonth() + 1).padStart(2, '0');
+  const oldDay = String(oldDate.getDate()).padStart(2, '0');
+  const oldDateStr = `${oldYear}-${oldMonth}-${oldDay}`;
+  
+  const oldFile = `mcp-system-${oldDateStr}.log`;
+  writeFileSync(join(logsDir, oldFile), "old log content");
+  
+  // 削除前の状態を確認
+  const filesBefore = readdirSync(logsDir);
+  assertEqual(filesBefore.length, 3, "作成した3つのファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, todayFile)), true, "今日のファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, tomorrowFile)), true, "明日のファイルが存在すること");
+  assertEqual(existsSync(join(logsDir, oldFile)), true, "古いファイルが存在すること");
+  
+  // deleteOldLogsを実行
+  deleteOldLogs(logsDir);
+  
+  // 削除後の状態を確認
+  const filesAfter = readdirSync(logsDir);
+  
+  // 期待される結果:
+  // - 今日のファイル: 残る
+  // - 明日のファイル: 残る（将来の日付でも問題なし）
+  // - 古いファイル: 削除される（31日前なので30日以上）
+  
+  assertEqual(filesAfter.length, 2, "2つのファイルが残ること");
+  assertEqual(existsSync(join(logsDir, todayFile)), true, "今日のファイルは残ること");
+  assertEqual(existsSync(join(logsDir, tomorrowFile)), true, "明日のファイルは残ること");
+  assertEqual(existsSync(join(logsDir, oldFile)), false, "古いファイルは削除されること");
+  
+  // ファイル内容も確認
+  const todayContent = readFileSync(join(logsDir, todayFile), "utf-8");
+  assertEqual(todayContent, "today's log content", "今日のファイル内容が保持されること");
+  
+  const tomorrowContent = readFileSync(join(logsDir, tomorrowFile), "utf-8");
+  assertEqual(tomorrowContent, "tomorrow's log content", "明日のファイル内容が保持されること");
+}
+
 // メインのテスト実行関数
 export async function runLogsTests() {
   await runTestSuite("Logs Test Suite", [
@@ -287,6 +356,7 @@ export async function runLogsTests() {
     { name: '古いログ削除テスト', fn: testDeleteOldLogs },
     { name: '空ディレクトリでの古いログ削除テスト', fn: testDeleteOldLogsEmptyDirectory },
     { name: '境界値での古いログ削除テスト', fn: testDeleteOldLogsBoundaryDate },
+    { name: '日付一貫性テスト', fn: testDateConsistency },
   ]);
 }
 

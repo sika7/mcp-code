@@ -42,7 +42,13 @@ function getLogDir(logKind: string) {
 function getLogFilePath(logKind: string) {
   const logDir = getLogDir(logKind)
 
-  const date = new Date().toISOString().slice(0, 10) // "2025-05-23"
+  // ローカル時間で日付を取得して一貫性を保つ
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const date = `${year}-${month}-${day}` // "2025-05-27"
+
   return join(logDir, `mcp-${logKind}-${date}.log`)
 }
 
@@ -109,8 +115,24 @@ export function createRequestErrorLogger(logPath = requestLogPath) {
 }
 
 export function deleteOldLogs(logDir: string) {
-  const files = readdirSync(logDir)
   const log = createSystemLogger()
+  // ディレクトリが存在しない場合は早期リターン
+  if (!existsSync(logDir)) {
+    return
+  }
+
+  let files: string[]
+  try {
+    files = readdirSync(logDir)
+  } catch (error) {
+    // ディレクトリ読み取りに失敗した場合は早期リターン
+    log({
+      logLevel: 'ERROR',
+      message: `Warning: Failed to read log directory ${logDir}:`,
+      data: error,
+    })
+    return
+  }
 
   for (const file of files) {
     const match = file.match(/^mcp-[a-zA-Z0-9_-]+-(\d{4}-\d{2}-\d{2})\.log$/)
@@ -131,5 +153,16 @@ export function deleteOldLogs(logDir: string) {
   }
 }
 
-deleteOldLogs(systemLogDir)
-deleteOldLogs(requestLogDir)
+// 起動時の古いログ削除処理（安全に実行）
+try {
+    deleteOldLogs(systemLogDir)
+    deleteOldLogs(requestLogDir)
+} catch (error) {
+  const log = createSystemLogger()
+  // ログ削除でエラーが発生しても処理を続行
+  log({
+    logLevel: 'WARNING',
+    message: 'Warning: Failed to delete old logs:',
+    data: error,
+  })
+}
