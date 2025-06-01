@@ -116,16 +116,16 @@ async function testRunScript() {
     throw new Error(`複数のシェル演算子を含むコマンドの実行に失敗: ${error}`);
   }
 
-  // 環境変数を含む複雑なコマンドのテスト
+  // 環境変数を含む複雑なコマンドのテスト（修正版）
   try {
     const result = await runScript(
       "env-test",
-      `echo "start" && NODE_ENV=test echo "NODE_ENV is set" && echo "end"`,
+      `echo "start" && export NODE_ENV=test && echo "NODE_ENV is $NODE_ENV" && echo "end"`,
       testDir
     );
     
     assertEqual(
-      result.includes("start") && result.includes("NODE_ENV is set") && result.includes("end"),
+      result.includes("start") && result.includes("NODE_ENV is test") && result.includes("end"),
       true,
       "環境変数を含む複雑なコマンドが正常に実行されること"
     );
@@ -154,11 +154,11 @@ async function testRunScript() {
     console.log("エラー詳細:", errorMsg); // デバッグ用
   }
 
-  // 実際のビルドコマンドのシミュレーションテスト
+  // 実際のビルドコマンドのシミュレーションテスト（修正版）
   try {
     const result = await runScript(
       "build-simulation",
-      `echo "TypeScript compilation..." && NODE_ENV=production echo "Building with NODE_ENV=$NODE_ENV" && echo "Build complete!"`,
+      `echo "TypeScript compilation..." && export NODE_ENV=production && echo "Building with NODE_ENV=$NODE_ENV" && echo "Build complete!"`,
       testDir
     );
     
