@@ -115,6 +115,42 @@ async function testRunScript() {
   } catch (error) {
     throw new Error(`複数のシェル演算子を含むコマンドの実行に失敗: ${error}`);
   }
+
+  // 環境変数を含む複雑なコマンドのテスト
+  try {
+    const result = await runScript(
+      "env-test",
+      `echo "start" && NODE_ENV=test echo "NODE_ENV is set" && echo "end"`,
+      testDir
+    );
+    
+    assertEqual(
+      result.includes("start") && result.includes("NODE_ENV is set") && result.includes("end"),
+      true,
+      "環境変数を含む複雑なコマンドが正常に実行されること"
+    );
+  } catch (error) {
+    throw new Error(`環境変数を含むコマンドの実行に失敗: ${error}`);
+  }
+
+  // 実際のビルドコマンドのシミュレーションテスト
+  try {
+    const result = await runScript(
+      "build-simulation",
+      `echo "TypeScript compilation..." && NODE_ENV=production echo "Building with NODE_ENV=$NODE_ENV" && echo "Build complete!"`,
+      testDir
+    );
+    
+    assertEqual(
+      result.includes("TypeScript compilation...") && 
+      result.includes("Building with NODE_ENV=production") && 
+      result.includes("Build complete!"),
+      true,
+      "実際のビルドコマンドのシミュレーションが正常に実行されること"
+    );
+  } catch (error) {
+    throw new Error(`ビルドコマンドのシミュレーションに失敗: ${error}`);
+  }
 }
 
 // メインのテスト実行関数
