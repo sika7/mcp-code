@@ -81,6 +81,40 @@ async function testRunScript() {
       "存在しないコマンドを実行しようとした場合にエラーが発生すること",
     );
   }
+
+  // &&を含むコマンドのテスト
+  try {
+    const result = await runScript(
+      "compound",
+      `echo "first" && echo "second"`,
+      testDir
+    );
+    
+    assertEqual(
+      result.includes("first") && result.includes("second"),
+      true,
+      "&&を含むコマンドが正常に実行されること"
+    );
+  } catch (error) {
+    throw new Error(`&&を含むコマンドの実行に失敗: ${error}`);
+  }
+
+  // 複数のシェル演算子を含むコマンドのテスト 
+  try {
+    const result = await runScript(
+      "complex",
+      `echo "start" && echo "middle" || echo "fallback"`,
+      testDir
+    );
+    
+    assertEqual(
+      result.includes("start") && result.includes("middle"),
+      true,
+      "複数のシェル演算子を含むコマンドが正常に実行されること"
+    );
+  } catch (error) {
+    throw new Error(`複数のシェル演算子を含むコマンドの実行に失敗: ${error}`);
+  }
 }
 
 // メインのテスト実行関数
