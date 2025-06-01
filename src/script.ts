@@ -8,10 +8,10 @@ export async function runScript(
 ): Promise<string> {
   // &&、||、;、|などのシェル演算子が含まれている場合はシェルを使用
   const needsShell = shell || /[;&|]|&&|\|\|/.test(scriptCmd)
-  
+
   let command: string
   let args: string[]
-  
+
   if (needsShell) {
     // シェルを使用する場合
     command = process.platform === 'win32' ? 'cmd' : '/bin/sh'
@@ -22,7 +22,7 @@ export async function runScript(
     command = parts[0]
     args = parts.slice(1)
   }
-  
+
   const child = spawn(command, args, {
     cwd: projectPath,
     shell: false, // 明示的にfalseに設定（上でシェルコマンドを構築済み）
@@ -48,7 +48,7 @@ export async function runScript(
         reject(msg)
       }
     })
-    
+
     child.on('error', error => {
       reject(`スクリプト実行エラー (${name}): ${error.message}`)
     })

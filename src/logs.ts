@@ -155,8 +155,8 @@ export function deleteOldLogs(logDir: string) {
 
 // 起動時の古いログ削除処理（安全に実行）
 try {
-    deleteOldLogs(systemLogDir)
-    deleteOldLogs(requestLogDir)
+  deleteOldLogs(systemLogDir)
+  deleteOldLogs(requestLogDir)
 } catch (error) {
   const log = createSystemLogger()
   // ログ削除でエラーが発生しても処理を続行

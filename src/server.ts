@@ -19,7 +19,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import { createDirectory, generateDirectoryTree, removeDirectory } from './directory.js'
+import {
+  createDirectory,
+  generateDirectoryTree,
+  removeDirectory,
+} from './directory.js'
 import {
   deleteFile,
   fileMoveOrRename,

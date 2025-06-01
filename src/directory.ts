@@ -1,5 +1,6 @@
-import path from 'path'
 import { promises as fs, rmSync } from 'fs'
+import path from 'path'
+
 import { minimatch } from 'minimatch'
 
 import { createSystemLogger } from './logs.js'
