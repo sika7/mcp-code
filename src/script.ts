@@ -44,13 +44,41 @@ export async function runScript(
       if (code === 0) {
         resolve(output)
       } else {
-        const msg = `スクリプトエラー (${name}): ${errorOutput}`
+        // エラー情報をより詳細に構築
+        const errorDetails = []
+
+        // 実行したコマンド情報
+        errorDetails.push(`コマンド: ${scriptCmd}`)
+        errorDetails.push(`終了コード: ${code}`)
+
+        // stdoutに出力がある場合は追加（エラー情報が含まれることがある）
+        if (output.trim()) {
+          errorDetails.push(`標準出力:\n${output.trim()}`)
+        }
+
+        // stderrに出力がある場合は追加
+        if (errorOutput.trim()) {
+          errorDetails.push(`エラー出力:\n${errorOutput.trim()}`)
+        }
+
+        // どちらも空の場合はコマンドが見つからないなどの可能性
+        if (!output.trim() && !errorOutput.trim()) {
+          errorDetails.push(
+            '出力がありません。コマンドが見つからない可能性があります。',
+          )
+        }
+
+        const msg = `スクリプトエラー (${name}):\n${errorDetails.join('\n\n')}`
         reject(msg)
       }
     })
 
     child.on('error', error => {
-      reject(`スクリプト実行エラー (${name}): ${error.message}`)
+      const errorDetails = [
+        `コマンド: ${scriptCmd}`,
+        `プロセスエラー: ${error.message}`,
+      ]
+      reject(`スクリプト実行エラー (${name}):\n${errorDetails.join('\n\n')}`)
     })
   })
 

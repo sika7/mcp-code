@@ -133,6 +133,27 @@ async function testRunScript() {
     throw new Error(`環境変数を含むコマンドの実行に失敗: ${error}`);
   }
 
+  // TypeScriptエラーのシミュレーションテスト（&&の前でエラー）
+  try {
+    await runScript(
+      "tsc-error-simulation",
+      `echo "Starting TypeScript compilation..." && echo "Error: Cannot find module 'nonexistent'" >&2 && exit 1`,
+      testDir
+    );
+    throw new Error("エラーが発生しなかった");
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    assertEqual(
+      errorMsg.includes("コマンド:") && 
+      errorMsg.includes("終了コード:") &&
+      errorMsg.includes("標準出力:") &&
+      errorMsg.includes("エラー出力:"),
+      true,
+      "&&の前でエラー時に詳細なエラー情報が取得できること"
+    );
+    console.log("エラー詳細:", errorMsg); // デバッグ用
+  }
+
   // 実際のビルドコマンドのシミュレーションテスト
   try {
     const result = await runScript(
