@@ -1,12 +1,28 @@
 import { readFileSync, existsSync } from 'fs'
 
+import { z } from 'zod'
 import { parse } from 'yaml'
 
 import { createSystemLogger } from './logs.js'
-import { configSchema, Config } from './schema.js'
 import { getConfigPath } from './util.js'
 
 const CONFIG_PATH = getConfigPath()
+const configSchema = z.object({
+  log_path: z.string().optional(),
+  excluded_files: z.array(z.string()).default([]),
+  current_project: z.string(),
+  projects: z.record(
+    z
+      .object({
+        src: z.string(),
+        scripts: z.record(z.string()).default({}),
+        excluded_files: z.array(z.string()).default([]),
+      })
+      .required(),
+  ),
+})
+
+type Config = z.infer<typeof configSchema>
 
 export function loadConfig({ configPath = CONFIG_PATH }): Config {
   if (!existsSync(configPath)) {
