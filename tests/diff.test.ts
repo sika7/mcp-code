@@ -15,7 +15,7 @@ import {
   allText,
   changesOnly,
   changesWithLineNumbersAndSeparators,
-} from '../src/diff'
+} from '../src/lib/diff'
 
 /**
  * 基本的な行の変更テスト（1行→1行）
