@@ -20,7 +20,6 @@ import { z } from 'zod'
 
 import { loadConfig } from './config.js'
 import {
-  fileMoveOrRename,
   mulchDeleteLines,
   mulchEditLines,
   mulchInsertLines,
@@ -336,20 +335,8 @@ try {
       // リクエストIDがない場合はランダムなIDを生成
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeSrcPath = resolveSafeProjectPath(srcPath, currentProject.src)
-      const safeDistPath = resolveSafeProjectPath(distPath, currentProject.src)
-
-      if (isExcludedFiles(safeSrcPath) || isExcludedFiles(safeDistPath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const message = await fileMoveOrRename(safeSrcPath, safeDistPath)
-        const result = convertToRelativePaths(message, currentProject.src)
+        const result = await lib.fileMoveOrRename(srcPath, distPath)
         return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)

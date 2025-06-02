@@ -5,6 +5,7 @@ import {
 } from './directory.js'
 import {
   deleteFile,
+  fileMoveOrRename,
   listFiles,
   ReadFileOptions,
   readTextFileWithOptions,
@@ -157,6 +158,18 @@ export class Core {
     const message = await deleteFile(safeFilePath)
     const result = convertToRelativePaths(message, this.projectPath)
 
+    return result
+  }
+
+  async fileMoveOrRename(srcPath: string, distPath: string) {
+    // プロジェクトルートのパスに丸める
+    const safeSrcPath = resolveSafeProjectPath(srcPath, this.projectPath)
+    this.checkExcludedFiles(safeSrcPath)
+    const safeDistPath = resolveSafeProjectPath(distPath, this.projectPath)
+    this.checkExcludedFiles(safeDistPath)
+
+    const message = await fileMoveOrRename(safeSrcPath, safeDistPath)
+    const result = convertToRelativePaths(message, this.projectPath)
     return result
   }
 }
