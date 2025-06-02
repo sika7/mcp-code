@@ -23,7 +23,7 @@ import {
   createDirectory,
   generateDirectoryTree,
   removeDirectory,
-} from './directory.js'
+} from './lib/directory.js'
 import {
   deleteFile,
   fileMoveOrRename,
