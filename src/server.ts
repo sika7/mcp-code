@@ -22,7 +22,6 @@ import { loadConfig } from './config.js'
 import {
   deleteFile,
   fileMoveOrRename,
-  listFiles,
   mulchDeleteLines,
   mulchEditLines,
   mulchInsertLines,
@@ -170,26 +169,8 @@ try {
     async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(path, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const files = await listFiles(safeFilePath, filter)
-        // 許可されたファイルのみ表示
-        const items = files.filter(item => !isExcludedFiles(item))
-
-        // 相対パスにして返す。
-        const result = convertToRelativePaths(
-          items.join('\n'),
-          currentProject.src,
-        )
+        const result = await lib.listFiles(path, filter)
         return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
