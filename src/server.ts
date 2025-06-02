@@ -39,7 +39,6 @@ import {
   DirectoryGrepOptionsSchema,
   FileGrepArgs,
   FileGrepOptionsSchema,
-  projectGrep,
   ProjectGrepArgs,
 } from './lib/serch.js'
 import {
@@ -225,22 +224,7 @@ try {
       const finalRequestId = arg.requestId || generateRequestId()
 
       try {
-        // プロジェクトルートのパスに丸める
-        const safeFilePath = resolveSafeProjectPath('/', currentProject.src)
-        const findResult = await projectGrep(
-          safeFilePath,
-          arg.pattern,
-          arg.options,
-        )
-
-        // 除外指定ファイルは見えないようにする
-        findResult.results = findResult.results.filter(
-          item => !isExcludedFiles(item.filePath),
-        )
-
-        const text = JSON.stringify(findResult, null, 2)
-        // 相対パスにして返す。
-        const result = convertToRelativePaths(text, currentProject.src)
+        const result = await lib.projectGrep(arg.pattern, arg.options)
 
         return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
