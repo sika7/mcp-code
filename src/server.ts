@@ -19,7 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import { createDirectory, removeDirectory } from './lib/directory.js'
+import { removeDirectory } from './lib/directory.js'
 import {
   deleteFile,
   fileMoveOrRename,
@@ -124,18 +124,8 @@ try {
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const result = await createDirectory(safeFilePath)
+        const result = await lib.createDirectory(filePath)
         return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
