@@ -5,6 +5,7 @@ import {
 } from './directory'
 import { listFiles } from './files'
 import { createSystemLogger } from './logs'
+import { fileGrep, GrepOptions } from './serch'
 import {
   convertToRelativePaths,
   isExcluded,
@@ -69,7 +70,7 @@ export class Core {
     return result
   }
 
-  async listFiles(path: string, filter: string = "") {
+  async listFiles(path: string, filter: string = '') {
     // プロジェクトルートのパスに丸める
     const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
     this.checkExcludedFiles(safeFilePath)
@@ -80,6 +81,20 @@ export class Core {
 
     // 相対パスにして返す。
     const result = convertToRelativePaths(items.join('\n'), this.projectPath)
+
+    return result
+  }
+
+  async findInFile(path: string, pattern: string, options: GrepOptions = {}) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const findResult = await fileGrep(safeFilePath, pattern, options)
+
+    const text = JSON.stringify(findResult, null, 2)
+    // 相対パスにして返す。
+    const result = convertToRelativePaths(text, this.projectPath)
 
     return result
   }

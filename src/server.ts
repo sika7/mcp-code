@@ -37,7 +37,6 @@ import {
 import { runScript } from './lib/script.js'
 import {
   DirectoryGrepOptionsSchema,
-  fileGrep,
   FileGrepArgs,
   FileGrepOptionsSchema,
   projectGrep,
@@ -195,29 +194,12 @@ try {
     async (arg: FileGrepArgs) => {
       const finalRequestId = arg.requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(
-        arg.filePath,
-        currentProject.src,
-      )
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const findResult = await fileGrep(
-          safeFilePath,
+        const result = await lib.findInFile(
+          arg.filePath,
           arg.pattern,
           arg.options,
         )
-
-        const text = JSON.stringify(findResult, null, 2)
-        // 相対パスにして返す。
-        const result = convertToRelativePaths(text, currentProject.src)
 
         return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
