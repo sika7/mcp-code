@@ -210,7 +210,10 @@ export class Core {
     return result
   }
 
-  async mulchDeleteLinesInFile(path: string, editlines: MulchLines[]) {
+  async mulchDeleteLinesInFile(
+    path: string,
+    editlines: MulchLines[],
+  ): Promise<string> {
     // プロジェクトルートのパスに丸める
     const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
     this.checkExcludedFiles(safeFilePath)

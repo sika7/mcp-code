@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'fs'
 
-import { z } from 'zod'
 import { parse } from 'yaml'
+import { z } from 'zod'
 
 import { createSystemLogger } from './lib/logs.js'
 import { getConfigPath } from './lib/util.js'

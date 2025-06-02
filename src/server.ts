@@ -20,11 +20,7 @@ import { z } from 'zod'
 
 import { loadConfig } from './config.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
-import {
-  arrayToTextContent,
-  createMpcErrorResponse,
-  createMpcResponse,
-} from './mpc.js'
+import { Core } from './lib/main.js'
 import {
   DirectoryGrepOptionsSchema,
   FileGrepArgs,
@@ -32,7 +28,11 @@ import {
   ProjectGrepArgs,
 } from './lib/search.js'
 import { generateRequestId } from './lib/util.js'
-import { Core } from './lib/main.js'
+import {
+  arrayToTextContent,
+  createMpcErrorResponse,
+  createMpcResponse,
+} from './mpc.js'
 
 try {
   const config = loadConfig({})
@@ -439,7 +439,7 @@ try {
     async ({ filePath, editlines, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
       try {
-        const result = lib.mulchDeleteLinesInFile(filePath, editlines)
+        const result = await lib.mulchDeleteLinesInFile(filePath, editlines)
         return await createMpcResponse(
           `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
         )
