@@ -43,7 +43,8 @@
     "test:util": "npx tsx tests/util.test.ts",
     "test:script": "npx tsx tests/script.test.ts",
     "test:directory": "npx tsx tests/directory.test.ts",
-    "test:search": "npx tsx tests/search.test.ts"
+    "test:search": "npx tsx tests/search.test.ts",
+    "test:library": "npx tsx tests/library.test.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",

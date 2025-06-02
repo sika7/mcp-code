@@ -9,6 +9,7 @@ import { runDataParseTests } from './data-parse.test.js';
 import { runDiffTests } from './diff.test.js';
 import { runDirectoryTests } from './directory.test.js';
 import { runFilesTests } from './files.test.js';
+import { runLibraryTests } from './library.test.js';
 import { runLogsTests } from './logs.test.js';
 import { runScriptTests } from './script.test.js';
 import { runSearchTests } from './search.test.js';
@@ -32,6 +33,7 @@ const testGroups: TestGroup[] = [
   { name: 'ディレクトリ操作モジュールテスト', runFn: runDirectoryTests },
   { name: 'ログ機能モジュールテスト', runFn: runLogsTests },
   { name: '検索機能モジュールテスト', runFn: runSearchTests },
+  { name: 'ライブラリ機能テスト', runFn: runLibraryTests },
 ];
 
 /**
