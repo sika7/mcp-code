@@ -7,10 +7,12 @@ import {
   deleteFile,
   fileMoveOrRename,
   listFiles,
+  mulchDeleteLines,
   MulchEditLines,
   mulchEditLines,
   MulchInsertLines,
   mulchInsertLines,
+  MulchLines,
   ReadFileOptions,
   readTextFileWithOptions,
   writeTextFile,
@@ -201,12 +203,19 @@ export class Core {
     const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
     this.checkExcludedFiles(safeFilePath)
 
-    const result = await mulchEditLines(
-      safeFilePath,
-      editlines,
-      previewFlg,
-    )
+    const result = await mulchEditLines(safeFilePath, editlines, previewFlg)
     result.message = convertToRelativePaths(result.message, this.projectPath)
+
+    return result
+  }
+
+  async mulchDeleteLinesInFile(path: string, editlines: MulchLines[]) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const message = await mulchDeleteLines(safeFilePath, editlines)
+    const result = convertToRelativePaths(message, this.projectPath)
 
     return result
   }

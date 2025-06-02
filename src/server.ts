@@ -19,7 +19,6 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import { mulchDeleteLines } from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
 import {
   arrayToTextContent,
@@ -33,12 +32,7 @@ import {
   FileGrepOptionsSchema,
   ProjectGrepArgs,
 } from './lib/serch.js'
-import {
-  convertToRelativePaths,
-  generateRequestId,
-  isExcluded,
-  resolveSafeProjectPath,
-} from './lib/util.js'
+import { generateRequestId } from './lib/util.js'
 import { Core } from './lib/main.js'
 
 try {
@@ -65,13 +59,6 @@ try {
   if (currentProject.excluded_files) {
     // excluded_filesが設定されてればマージ
     allExcludedFiles = [...allExcludedFiles, ...currentProject.excluded_files]
-  }
-
-  const isExcludedFiles = (filePath: string) => {
-    // 除外ファイルをチェック
-    if (isExcluded(filePath, allExcludedFiles)) return true
-
-    return false
   }
 
   const lib = new Core(currentProject.src, allExcludedFiles)
@@ -461,19 +448,8 @@ try {
     async ({ filePath, editlines, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const message = await mulchDeleteLines(safeFilePath, editlines)
-        const result = convertToRelativePaths(message, currentProject.src)
+        const result = lib.mulchDeleteLinesInFile(filePath, editlines)
         return await createMpcResponse(
           `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
         )
