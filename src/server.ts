@@ -25,7 +25,6 @@ import {
   mulchDeleteLines,
   mulchEditLines,
   mulchInsertLines,
-  readTextFileWithOptions,
   writeTextFile,
 } from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
@@ -258,22 +257,13 @@ try {
       requestId,
     }) => {
       const finalRequestId = requestId || generateRequestId()
-
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const { content, metadata } = await readTextFileWithOptions(
-          safeFilePath,
-          { showLineNumbers, startLine, endLine, maxLines },
-        )
+        const { content, metadata } = await lib.readFile(filePath, {
+          showLineNumbers,
+          startLine,
+          endLine,
+          maxLines,
+        })
 
         return await createMpcResponse(
           content,

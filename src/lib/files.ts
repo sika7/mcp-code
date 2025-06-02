@@ -8,7 +8,7 @@ import { createSystemLogger } from './logs.js'
 const log = createSystemLogger()
 
 // ファイル読み込みオプションの型定義
-interface ReadFileOptions {
+export interface ReadFileOptions {
   showLineNumbers?: boolean
   startLine?: number // 表示開始行（1ベース）
   endLine?: number // 表示終了行（1ベース）
