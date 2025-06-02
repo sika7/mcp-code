@@ -24,7 +24,7 @@ import {
   fileGrep,
   GrepOptions,
   projectGrep,
-} from './serch.js'
+} from './search.js'
 import {
   convertToRelativePaths,
   isExcluded,

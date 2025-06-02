@@ -30,7 +30,7 @@ import {
   FileGrepArgs,
   FileGrepOptionsSchema,
   ProjectGrepArgs,
-} from './lib/serch.js'
+} from './lib/search.js'
 import { generateRequestId } from './lib/util.js'
 import { Core } from './lib/main.js'
 
