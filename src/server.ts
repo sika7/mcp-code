@@ -25,7 +25,6 @@ import {
   createMpcErrorResponse,
   createMpcResponse,
 } from './mpc.js'
-import { runScript } from './lib/script.js'
 import {
   DirectoryGrepOptionsSchema,
   FileGrepArgs,
@@ -77,7 +76,6 @@ try {
     },
     async ({ path, exclude, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.directoryTree(path, exclude.split(','))
         return await createMpcResponse(result, {}, finalRequestId)
@@ -98,7 +96,6 @@ try {
     },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.createDirectory(filePath)
         return await createMpcResponse(result)
@@ -119,7 +116,6 @@ try {
     },
     async ({ filePath, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.removeDirectory(filePath)
         return await createMpcResponse(result)
@@ -145,7 +141,6 @@ try {
     },
     async ({ path, filter, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.listFiles(path, filter)
         return await createMpcResponse(result, {}, finalRequestId)
@@ -201,7 +196,6 @@ try {
     },
     async (arg: ProjectGrepArgs) => {
       const finalRequestId = arg.requestId || generateRequestId()
-
       try {
         const result = await lib.projectGrep(arg.pattern, arg.options)
 
@@ -272,7 +266,6 @@ try {
     },
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.writeFile(filePath, content)
         return await createMpcResponse(result)
@@ -317,7 +310,6 @@ try {
     async ({ srcPath, distPath, requestId }) => {
       // リクエストIDがない場合はランダムなIDを生成
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = await lib.fileMoveOrRename(srcPath, distPath)
         return await createMpcResponse(result)
@@ -401,7 +393,6 @@ try {
     },
     async ({ filePath, editlines, preview, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const { message, content } = await lib.mulchEditLinesInFile(
           filePath,
@@ -447,7 +438,6 @@ try {
     },
     async ({ filePath, editlines, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
-
       try {
         const result = lib.mulchDeleteLinesInFile(filePath, editlines)
         return await createMpcResponse(
@@ -482,8 +472,7 @@ try {
           )
 
           try {
-            const result = await runScript(name, scriptCmd, currentProject.src)
-
+            const result = await lib.runScript(name, scriptCmd)
             return await createMpcResponse(result)
           } catch (error) {
             const errorMsg =

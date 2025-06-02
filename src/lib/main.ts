@@ -18,6 +18,7 @@ import {
   writeTextFile,
 } from './files.js'
 import { createSystemLogger } from './logs.js'
+import { runScript } from './script.js'
 import {
   DirectoryGrepOptionsInput,
   fileGrep,
@@ -216,6 +217,12 @@ export class Core {
 
     const message = await mulchDeleteLines(safeFilePath, editlines)
     const result = convertToRelativePaths(message, this.projectPath)
+
+    return result
+  }
+
+  async runScript(name: string, scriptCmd: string) {
+    const result = await runScript(name, scriptCmd, this.projectPath)
 
     return result
   }
