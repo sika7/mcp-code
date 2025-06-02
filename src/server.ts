@@ -19,11 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import {
-  createDirectory,
-  generateDirectoryTree,
-  removeDirectory,
-} from './lib/directory.js'
+import { createDirectory, removeDirectory } from './lib/directory.js'
 import {
   deleteFile,
   fileMoveOrRename,
@@ -55,6 +51,7 @@ import {
   isExcluded,
   resolveSafeProjectPath,
 } from './lib/util.js'
+import { Core } from './lib/main.js'
 
 try {
   const config = loadConfig({})
@@ -89,6 +86,8 @@ try {
     return false
   }
 
+  const lib = new Core(currentProject.src, allExcludedFiles)
+
   server.tool(
     'directoryTree',
     'プロジェクトのファイルをツリー表示する.',
@@ -104,25 +103,8 @@ try {
     async ({ path, exclude, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(path, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたパスはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const mergeExcluded = [...allExcludedFiles, ...exclude.split(',')]
-        const log = createSystemLogger()
-        log({ logLevel: 'INFO', message: '除外パターン', data: mergeExcluded })
-        const tree = await generateDirectoryTree(safeFilePath, {
-          exclude: mergeExcluded,
-        })
-        // 相対パスにして返す。
-        const result = convertToRelativePaths(tree, currentProject.src)
+        const result = await lib.directoryTree(path, exclude.split(','))
         return await createMpcResponse(result, {}, finalRequestId)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
