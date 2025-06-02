@@ -433,7 +433,7 @@ function sortByStartLineDescending<T>(
   return lines.sort((a, b) => b.start - a.start) as T
 }
 
-interface MulchInsertLines {
+export interface MulchInsertLines {
   lineNumber: number // 表示開始行（1ベース）
   content: string
 }

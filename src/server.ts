@@ -19,11 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import {
-  mulchDeleteLines,
-  mulchEditLines,
-  mulchInsertLines,
-} from './lib/files.js'
+import { mulchDeleteLines, mulchEditLines } from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
 import {
   arrayToTextContent,
@@ -370,23 +366,12 @@ try {
     async ({ filePath, editlines, afterMode, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const message = await mulchInsertLines(
-          safeFilePath,
+        const result = await lib.mulchInsertLinesInFile(
+          filePath,
           editlines,
           afterMode,
         )
-        const result = convertToRelativePaths(message, currentProject.src)
         return await createMpcResponse(
           `${result} もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。`,
         )

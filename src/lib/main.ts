@@ -7,6 +7,8 @@ import {
   deleteFile,
   fileMoveOrRename,
   listFiles,
+  MulchInsertLines,
+  mulchInsertLines,
   ReadFileOptions,
   readTextFileWithOptions,
   writeTextFile,
@@ -170,6 +172,21 @@ export class Core {
 
     const message = await fileMoveOrRename(safeSrcPath, safeDistPath)
     const result = convertToRelativePaths(message, this.projectPath)
+    return result
+  }
+
+  async mulchInsertLinesInFile(
+    path: string,
+    editlines: MulchInsertLines[],
+    afterMode: boolean = false,
+  ) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const message = await mulchInsertLines(safeFilePath, editlines, afterMode)
+    const result = convertToRelativePaths(message, this.projectPath)
+
     return result
   }
 }
