@@ -27,7 +27,7 @@ import {
   projectGrep,
   FileGrepOptionsSchema,
   DirectoryGrepOptionsSchema,
-} from "../src/serch";
+} from "../src/lib/serch";
 
 async function testNormalizeOptions() {
   // デフォルトオプションのテスト

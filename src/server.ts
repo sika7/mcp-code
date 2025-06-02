@@ -48,7 +48,7 @@ import {
   FileGrepOptionsSchema,
   projectGrep,
   ProjectGrepArgs,
-} from './serch.js'
+} from './lib/serch.js'
 import {
   convertToRelativePaths,
   generateRequestId,
