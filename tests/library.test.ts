@@ -102,7 +102,7 @@ async function testDirectoryTreeWithExcludes() {
     await createFile('package.json', '{"name": "test-project"}')
     await createFile('app.log', 'log content')
     
-    const core = new Core(testDir, ['**/*.log', 'node_modules/**'])
+    const core = new Core(testDir, ['**/*.log', 'node_modules'])
     const tree = await core.directoryTree('/', [])
     
     assertContains(tree, 'src', 'srcディレクトリが含まれること')
@@ -242,7 +242,7 @@ async function testSearchWithOptions() {
   const { testDir, createFile, cleanup } = await createTestEnvironment('search-options')
   
   try {
-    await createFile('test.js', 'const hello = "HELLO";\nconst world = "world";')
+    await createFile('test.js', 'const HELLO = "HELLO";\nconst world = "world";')
     
     const core = new Core(testDir, [])
     
