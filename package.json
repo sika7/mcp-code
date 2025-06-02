@@ -4,6 +4,26 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js"
+    },
+    "./lib": {
+      "import": "./dist/lib/main.js",
+      "types": "./dist/lib/main.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "mcp-code": "./dist/server.js"
   },
