@@ -21,7 +21,7 @@ import {
   mulchInsertLines,
   mulchEditLines,
   mulchDeleteLines,
-} from "../src/files";
+} from "../src/lib/files";
 
 
 async function testReadTextFile() {

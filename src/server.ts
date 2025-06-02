@@ -33,7 +33,7 @@ import {
   mulchInsertLines,
   readTextFileWithOptions,
   writeTextFile,
-} from './files.js'
+} from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './logs.js'
 import {
   arrayToTextContent,
