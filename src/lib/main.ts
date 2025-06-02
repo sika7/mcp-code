@@ -2,20 +2,26 @@ import {
   createDirectory,
   generateDirectoryTree,
   removeDirectory,
-} from './directory'
-import { listFiles, ReadFileOptions, readTextFileWithOptions, writeTextFile } from './files'
-import { createSystemLogger } from './logs'
+} from './directory.js'
+import {
+  deleteFile,
+  listFiles,
+  ReadFileOptions,
+  readTextFileWithOptions,
+  writeTextFile,
+} from './files.js'
+import { createSystemLogger } from './logs.js'
 import {
   DirectoryGrepOptionsInput,
   fileGrep,
   GrepOptions,
   projectGrep,
-} from './serch'
+} from './serch.js'
 import {
   convertToRelativePaths,
   isExcluded,
   resolveSafeProjectPath,
-} from './util'
+} from './util.js'
 
 const log = createSystemLogger()
 
@@ -138,6 +144,17 @@ export class Core {
 
     const message = await writeTextFile(safeFilePath, content)
     // 相対パスにして返す。
+    const result = convertToRelativePaths(message, this.projectPath)
+
+    return result
+  }
+
+  async deleteFile(path: string) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const message = await deleteFile(safeFilePath)
     const result = convertToRelativePaths(message, this.projectPath)
 
     return result
