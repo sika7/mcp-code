@@ -498,7 +498,7 @@ export async function mulchInsertLines(
   return message
 }
 
-interface MulchEditLines {
+export interface MulchEditLines {
   startLine: number // 表示開始行（1ベース）
   endLine: number // 表示終了行（1ベース）
   content: string

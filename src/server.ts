@@ -19,7 +19,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
 import { loadConfig } from './config.js'
-import { mulchDeleteLines, mulchEditLines } from './lib/files.js'
+import { mulchDeleteLines } from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
 import {
   arrayToTextContent,
@@ -415,27 +415,16 @@ try {
     async ({ filePath, editlines, preview, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const { message, content } = await mulchEditLines(
-          safeFilePath,
+        const { message, content } = await lib.mulchEditLinesInFile(
+          filePath,
           editlines,
           preview,
         )
-        const result = convertToRelativePaths(message, currentProject.src)
         const msg = preview
           ? '保存するには preview: false で再度、実行してください'
           : 'もう一度このツールを同じファイルに使用する場合は行番号がずれているため再度ファイルを読み込み直してください。'
-        const textContent = arrayToTextContent([`${result} ${msg}`, content])
+        const textContent = arrayToTextContent([`${message} ${msg}`, content])
         return await createMpcResponse(textContent, {}, finalRequestId)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
