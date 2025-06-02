@@ -1,4 +1,8 @@
-import { createDirectory, generateDirectoryTree } from './directory'
+import {
+  createDirectory,
+  generateDirectoryTree,
+  removeDirectory,
+} from './directory'
 import { createSystemLogger } from './logs'
 import {
   convertToRelativePaths,
@@ -46,6 +50,15 @@ export class Core {
     this.checkExcludedFiles(safeFilePath)
 
     const result = await createDirectory(safeFilePath)
+    return result
+  }
+
+  async removeDirectory(path: string) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const result = await removeDirectory(safeFilePath)
     return result
   }
 }
