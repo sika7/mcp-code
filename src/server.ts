@@ -25,7 +25,6 @@ import {
   mulchDeleteLines,
   mulchEditLines,
   mulchInsertLines,
-  writeTextFile,
 } from './lib/files.js'
 import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
 import {
@@ -293,20 +292,8 @@ try {
     async ({ filePath, content, requestId }) => {
       const finalRequestId = requestId || generateRequestId()
 
-      // プロジェクトルートのパスに丸める
-      const safeFilePath = resolveSafeProjectPath(filePath, currentProject.src)
-
-      if (isExcludedFiles(safeFilePath)) {
-        return createMpcErrorResponse(
-          '指定されたファイルはツールにより制限されています',
-          'PERMISSION_DENIED',
-        )
-      }
-
       try {
-        const message = await writeTextFile(safeFilePath, content)
-        // 相対パスにして返す。
-        const result = convertToRelativePaths(message, currentProject.src)
+        const result = await lib.writeFile(filePath, content)
         return await createMpcResponse(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)

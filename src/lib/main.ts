@@ -3,7 +3,7 @@ import {
   generateDirectoryTree,
   removeDirectory,
 } from './directory'
-import { listFiles, ReadFileOptions, readTextFileWithOptions } from './files'
+import { listFiles, ReadFileOptions, readTextFileWithOptions, writeTextFile } from './files'
 import { createSystemLogger } from './logs'
 import {
   DirectoryGrepOptionsInput,
@@ -129,5 +129,17 @@ export class Core {
     const results = await readTextFileWithOptions(safeFilePath, options)
 
     return results
+  }
+
+  async writeFile(path: string, content: string) {
+    // プロジェクトルートのパスに丸める
+    const safeFilePath = resolveSafeProjectPath(path, this.projectPath)
+    this.checkExcludedFiles(safeFilePath)
+
+    const message = await writeTextFile(safeFilePath, content)
+    // 相対パスにして返す。
+    const result = convertToRelativePaths(message, this.projectPath)
+
+    return result
   }
 }
