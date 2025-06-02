@@ -40,7 +40,7 @@ import {
   createMpcErrorResponse,
   createMpcResponse,
 } from './mpc.js'
-import { runScript } from './core/script.js'
+import { runScript } from './lib/script.js'
 import {
   DirectoryGrepOptionsSchema,
   fileGrep,

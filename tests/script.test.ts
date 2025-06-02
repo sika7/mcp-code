@@ -11,7 +11,7 @@ import {
   createTestEnvironment,
   runTestSuite,
 } from "./test-utils";
-import { runScript } from "../src/core/script";
+import { runScript } from "../src/lib/script";
 
 async function testRunScript() {
   // テスト環境のセットアップ
