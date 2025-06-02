@@ -9,7 +9,7 @@ import { dirname, join } from 'path'
 
 import { parseISO, differenceInDays } from 'date-fns'
 
-import { getLogPath } from '../util.js'
+import { getLogPath } from './util.js'
 
 const MAX_AGE_DAYS = 30
 

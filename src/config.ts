@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { parse } from 'yaml'
 
 import { createSystemLogger } from './lib/logs.js'
-import { getConfigPath } from './util.js'
+import { getConfigPath } from './lib/util.js'
 
 const CONFIG_PATH = getConfigPath()
 const configSchema = z.object({

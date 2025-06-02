@@ -54,7 +54,7 @@ import {
   generateRequestId,
   isExcluded,
   resolveSafeProjectPath,
-} from './util.js'
+} from './lib/util.js'
 
 try {
   const config = loadConfig({})
