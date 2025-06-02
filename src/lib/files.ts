@@ -3,7 +3,7 @@ import fs from 'fs/promises'
 import path from 'path'
 
 import { allText, diffLinesWithRanges, DiffRange } from './diff.js'
-import { createSystemLogger } from '../logs.js'
+import { createSystemLogger } from './logs.js'
 
 const log = createSystemLogger()
 

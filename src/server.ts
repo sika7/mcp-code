@@ -34,7 +34,7 @@ import {
   readTextFileWithOptions,
   writeTextFile,
 } from './lib/files.js'
-import { createRequestErrorLogger, createSystemLogger } from './logs.js'
+import { createRequestErrorLogger, createSystemLogger } from './lib/logs.js'
 import {
   arrayToTextContent,
   createMpcErrorResponse,

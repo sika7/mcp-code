@@ -3,7 +3,7 @@ import path from 'path'
 
 import { minimatch } from 'minimatch'
 
-import { createSystemLogger } from '../logs.js'
+import { createSystemLogger } from './logs.js'
 
 const log = createSystemLogger()
 

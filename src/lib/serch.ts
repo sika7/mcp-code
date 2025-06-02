@@ -4,7 +4,7 @@ import * as readline from 'readline'
 
 import { z } from 'zod'
 
-import { createSystemLogger } from '../logs.js'
+import { createSystemLogger } from './logs.js'
 
 // 型定義
 interface GrepOptions {

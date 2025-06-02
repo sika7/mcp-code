@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'fs'
 import { z } from 'zod'
 import { parse } from 'yaml'
 
-import { createSystemLogger } from './logs.js'
+import { createSystemLogger } from './lib/logs.js'
 import { getConfigPath } from './util.js'
 
 const CONFIG_PATH = getConfigPath()

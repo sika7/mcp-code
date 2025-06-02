@@ -6,7 +6,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join } from "path";
 
 import { assertEqual, isMainModule, createTestEnvironment, runTestSuite } from './test-utils';
-import { createSystemLogger, createRequestErrorLogger, deleteOldLogs } from '../src/logs';
+import { createSystemLogger, createRequestErrorLogger, deleteOldLogs } from '../src/lib/logs';
 
 async function testCreateSystemLogger() {
   // テスト環境のセットアップ
