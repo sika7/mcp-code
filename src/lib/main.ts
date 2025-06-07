@@ -40,6 +40,12 @@ export function checkExcludedFiles(filePath: string, excludedPath: string[]) {
   }
 }
 
+export function isExcludedFiles(filePath: string, excludedPath: string[]) {
+  // 除外ファイルをチェック
+  if (isExcluded(filePath, excludedPath)) return true
+  return false
+}
+
 export class Core {
   private projectPath: string
   private excludedPath: string[]
@@ -54,9 +60,7 @@ export class Core {
   }
 
   private isExcludedFiles(filePath: string) {
-    // 除外ファイルをチェック
-    if (isExcluded(filePath, this.excludedPath)) return true
-    return false
+    return isExcludedFiles(filePath, this.excludedPath)
   }
 
   async directoryTree(path: string, exclude: string[]) {
