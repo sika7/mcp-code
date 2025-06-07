@@ -33,6 +33,13 @@ import {
 
 const log = createSystemLogger()
 
+export function checkExcludedFiles(filePath: string, excludedPath: string[]) {
+  // 除外ファイルをチェック
+  if (isExcluded(filePath, excludedPath)) {
+    throw new Error('指定されたパスはツールにより制限されています')
+  }
+}
+
 export class Core {
   private projectPath: string
   private excludedPath: string[]
@@ -43,10 +50,7 @@ export class Core {
   }
 
   private checkExcludedFiles(filePath: string) {
-    // 除外ファイルをチェック
-    if (isExcluded(filePath, this.excludedPath)) {
-      throw new Error('指定されたパスはツールにより制限されています')
-    }
+    checkExcludedFiles(filePath, this.excludedPath)
   }
 
   private isExcludedFiles(filePath: string) {
